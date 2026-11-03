@@ -51,35 +51,47 @@ export function AppShell() {
     window.scrollTo(0, 0);
   }, [pathname]);
 
-  return (
+  const home = pathname === "/";
+  const nav = (
+    <nav
+      className={`no-print mx-4 flex flex-wrap items-center gap-x-7 border-b border-line pt-3 sm:mx-auto sm:h-16 sm:w-[calc(100%-3.5rem)] sm:max-w-[1024px] sm:flex-nowrap sm:pt-0 ${
+        // On home the nav floats over the photo, so it always uses light text whatever the theme.
+        home ? "z-10 self-start [--ink:#f4f4f5] [--line:rgb(255_255_255/0.12)] [--muted:#c4c4c8] [--surface-2:rgb(255_255_255/0.1)] [grid-area:1/1]" : ""
+      }`}
+    >
+      <NavLink to="/" className="whitespace-nowrap text-[15px] font-[650] tracking-[-0.01em] text-ink">
+        Guitar Practice
+      </NavLink>
+      <div className="no-scrollbar order-3 flex w-full gap-5 overflow-x-auto sm:order-none sm:w-auto sm:flex-1 sm:gap-[22px]">
+        {LINKS.map(l => (
+          <NavLink
+            key={l.to}
+            to={l.to}
+            className={`whitespace-nowrap border-b-2 py-3 text-sm sm:pt-[21px] sm:pb-[19px] ${isUnder(pathname, l.paths) ? "border-ink text-ink" : "border-transparent text-muted hover:text-ink"}`}
+          >
+            {l.label}
+          </NavLink>
+        ))}
+      </div>
+      <div className="ml-auto flex items-center gap-1">
+        <ThemeToggle />
+      </div>
+    </nav>
+  );
+
+  // Home is a full-screen photo with the nav laid over it; every other page sits in the reading column.
+  return home ? (
+    <div className="grid h-svh min-h-[480px] grid-rows-[minmax(0,1fr)] overflow-hidden">
+      {nav}
+      <Outlet />
+      <Toasts />
+    </div>
+  ) : (
     <div className="flex min-h-svh flex-col overflow-x-clip">
-      <nav className="no-print mx-4 flex flex-wrap items-center gap-x-7 border-b border-line pt-3 sm:mx-auto sm:h-16 sm:w-[calc(100%-3.5rem)] sm:max-w-[1024px] sm:flex-nowrap sm:pt-0">
-        <NavLink to="/" className="whitespace-nowrap text-[15px] font-[650] tracking-[-0.01em]">
-          Guitar Practice
-        </NavLink>
-        <div className="no-scrollbar order-3 flex w-full gap-5 overflow-x-auto sm:order-none sm:w-auto sm:flex-1 sm:gap-[22px]">
-          {LINKS.map(l => (
-            <NavLink
-              key={l.to}
-              to={l.to}
-              className={`whitespace-nowrap border-b-2 py-3 text-sm sm:pt-[21px] sm:pb-[19px] ${isUnder(pathname, l.paths) ? "border-ink text-ink" : "border-transparent text-muted hover:text-ink"}`}
-            >
-              {l.label}
-            </NavLink>
-          ))}
-        </div>
-        <div className="ml-auto flex items-center gap-1">
-          <ThemeToggle />
-        </div>
-      </nav>
-      {/* Home is a full-screen scene; every other page sits in the reading column. */}
-      {pathname === "/" ? (
+      {nav}
+      <main className="mx-auto w-full max-w-[1080px] px-4 pt-7 pb-24 sm:px-7 sm:pt-10">
         <Outlet />
-      ) : (
-        <main className="mx-auto w-full max-w-[1080px] px-4 pt-7 pb-24 sm:px-7 sm:pt-10">
-          <Outlet />
-        </main>
-      )}
+      </main>
       <Toasts />
     </div>
   );
