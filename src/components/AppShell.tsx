@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { NavLink, Outlet, useLocation } from "react-router";
 import { stopPlayback } from "@/audio/playback";
-import { applyTheme, useSettings, type Theme } from "@/progress/settings";
+import { applyTheme, useDark, useSettings } from "@/progress/settings";
 import { Haze } from "./Haze";
 import { glassClass } from "./ui";
 import { Toasts } from "./Toasts";
@@ -26,9 +26,6 @@ export function formatDuration(sec: number) {
   return h ? `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}` : `${m}:${String(s).padStart(2, "0")}`;
 }
 
-const THEMES: Theme[] = ["auto", "light", "dark"];
-const THEME_ICON: Record<Theme, string> = { auto: "◐", light: "☀︎", dark: "☾" };
-
 /** A guitar pick with a soft light across it, for the brand. */
 function PickMark() {
   return (
@@ -48,14 +45,23 @@ function PickMark() {
 function ThemeToggle() {
   const theme = useSettings(s => s.theme);
   const setTheme = useSettings(s => s.setTheme);
+  const dark = useDark();
   useEffect(() => applyTheme(theme), [theme]);
+  // Every click swaps day and night; landing on the system's own look goes back to following it.
+  const flip = () => {
+    // Read the system now rather than trusting the last change event, so a click is never swallowed.
+    const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const nextDark = !(theme === "auto" ? systemDark : theme === "dark");
+    setTheme(nextDark === systemDark ? "auto" : nextDark ? "dark" : "light");
+  };
   return (
     <button
-      onClick={() => setTheme(THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length]!)}
-      title={`Theme: ${theme} (click to change)`}
+      onClick={flip}
+      title={dark ? "Switch to day" : "Switch to night"}
+      aria-label={dark ? "Switch to day" : "Switch to night"}
       className="rounded-lg px-2.5 py-1.5 text-[13px] text-muted transition duration-200 ease-in-out hover:bg-surface-2 hover:text-ink"
     >
-      {THEME_ICON[theme]}
+      {dark ? "☀︎" : "☾"}
     </button>
   );
 }
@@ -74,7 +80,10 @@ export function AppShell() {
     <header
       className={`no-print z-20 px-3 pt-3 sm:px-6 sm:pt-4 ${
         // On home the bar floats over the photo; elsewhere it sticks to the top as the page scrolls under it.
-        home ? "self-start [grid-area:1/1]" : "sticky top-0"
+        // Over the bright day photo the glass is smoked and the text cream, so the sky can't wash the links out.
+        home
+          ? "self-start [grid-area:1/1] [--bg:#1e2a22] [--glass-rim:rgb(255_255_255/0.22)] [--glass:rgb(28_34_30/0.42)] [--ink:#f6f1e4] [--muted:rgb(246_241_228/0.78)] [--surface-2:rgb(255_255_255/0.16)]"
+          : "sticky top-0"
       }`}
     >
       <nav className={`mx-auto flex max-w-[1080px] flex-wrap items-center gap-x-6 rounded-2xl px-3 ${glassClass} sm:h-14 sm:flex-nowrap sm:pr-2.5 sm:pl-4`}>
