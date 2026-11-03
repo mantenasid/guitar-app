@@ -1,7 +1,7 @@
-// Every practisable skill: what it measures, its four level thresholds, and what unlocks it.
+// Every practisable skill: what it measures, its level thresholds, and what unlocks it.
 // Skills are atomic (one chord, one change, one pattern, one scale) and build on each other.
 import { ALL_CHORDS, ALL_PATTERNS, ALL_SCALES } from "@/content";
-import { ALL_PAIRS } from "./changes";
+import { ALL_PAIRS, CHANGE_LEVELS } from "./changes";
 
 export type SkillKind = "chord" | "change" | "strum" | "scale";
 
@@ -10,19 +10,20 @@ export interface Metric {
   unit: string;
   /** Whether a bigger value is better (speed) or a smaller one (time). */
   better: "higher" | "lower";
-  /** Value needed for levels 1–4. Level 4 is mastery. */
-  levels: [number, number, number, number];
+  /** Value needed for each level, from level 1. The last level is mastery. */
+  levels: readonly number[];
   /** How the game is described. */
   game: string;
 }
 
+/** Most levels any skill has. Changes have fewer: see maxLevel. */
 export const MAX_LEVEL = 4;
 
 export const METRICS: Record<SkillKind, Metric> = {
   // Chord recall: seconds from seeing the name to a clean shape.
   chord: { unit: "s", better: "lower", levels: [3, 2, 1.5, 1], game: "Chord recall" },
-  // One-minute changes: clean switches per minute.
-  change: { unit: "/min", better: "higher", levels: [20, 40, 60, 80], game: "One-minute changes" },
+  // One-minute changes: clean switches per minute, averaged over three drills in a row.
+  change: { unit: "/min", better: "higher", levels: CHANGE_LEVELS, game: "One-minute changes" },
   // Tempo challenge: cleanest tempo in BPM.
   strum: { unit: "BPM", better: "higher", levels: [60, 80, 100, 120], game: "Tempo challenge" },
   scale: { unit: "BPM", better: "higher", levels: [60, 80, 100, 120], game: "Tempo challenge" },
@@ -99,7 +100,10 @@ export function countByKind(kind: SkillKind) {
   return SKILLS.filter(s => s.kind === kind).length;
 }
 
-/** Level 0–4 for a best value. */
+/** Number of levels for a kind of skill; reaching it means mastered. */
+export const maxLevel = (kind: SkillKind) => METRICS[kind].levels.length;
+
+/** Level from 0 to maxLevel(kind) for a value. */
 export function levelFor(kind: SkillKind, best: number | undefined): number {
   if (best === undefined) return 0;
   const m = METRICS[kind];

@@ -6,7 +6,7 @@ import { useProgress, useStreak } from "@/progress/hooks";
 import { useSettings } from "@/progress/settings";
 import { ALL_PAIRS } from "@/skills/changes";
 import { DAILY_XP_GOAL, playerLevel, progressToNext, type SkillProgress } from "@/skills/progress";
-import { MAX_LEVEL, METRICS, SKILLS, SKILL_BY_ID, formatValue, type Skill } from "@/skills/registry";
+import { METRICS, SKILLS, SKILL_BY_ID, formatValue, kindOf, maxLevel, type Skill } from "@/skills/registry";
 import { TRANSITION_SECTIONS } from "@/content";
 
 const UNITS: { unit: string; note: string }[] = [
@@ -34,8 +34,11 @@ function needs(skill: Skill, progress: Map<string, SkillProgress>) {
 
 function SkillNode({ skill, p, all }: { skill: Skill; p: SkillProgress; all: Map<string, SkillProgress> }) {
   const metric = METRICS[skill.kind];
-  const target = p.level < MAX_LEVEL ? metric.levels[p.level]! : undefined;
-  const near = progressToNext(skill.kind, p.best, p.level);
+  const max = maxLevel(skill.kind);
+  const target = p.level < max ? metric.levels[p.level]! : undefined;
+  // Changes are judged on current speed (an average), the rest on the best attempt.
+  const shown = p.current ?? p.best;
+  const near = progressToNext(skill.kind, shown, p.level);
   if (!p.unlocked) {
     return (
       <div className="flex min-h-[92px] flex-col justify-between rounded-xl border border-dashed border-line-2 p-3 text-faint" title={`Unlock by reaching level 1 on: ${needs(skill, all).join(", ")}`}>
@@ -52,21 +55,21 @@ function SkillNode({ skill, p, all }: { skill: Skill; p: SkillProgress; all: Map
     <Link
       to={skill.href}
       className={`${cardClass} flex min-h-[92px] flex-col justify-between gap-2 p-3 transition hover:-translate-y-px ${
-        p.level >= MAX_LEVEL ? "border-good" : fresh ? "border-accent ring-1 ring-accent" : "hover:border-line-2"
+        p.level >= max ? "border-good" : fresh ? "border-accent ring-1 ring-accent" : "hover:border-line-2"
       }`}
     >
       <span className="flex items-start justify-between gap-2">
         <span className="text-sm font-[620] leading-snug">{skill.title}</span>
-        <LevelPips level={p.level} className="mt-1 shrink-0" />
+        <LevelPips level={p.level} max={max} className="mt-1 shrink-0" />
       </span>
-      {p.level >= MAX_LEVEL ? (
+      {p.level >= max ? (
         <span className="text-xs font-medium text-good">Mastered · best {formatValue(skill.kind, p.best!)}</span>
       ) : fresh ? (
         <span className="text-xs font-medium text-accent">Start · {metric.game}</span>
       ) : (
         <span className="flex flex-col gap-1">
           <span className="flex justify-between text-xs text-muted">
-            <span>{p.best !== undefined ? `Best ${formatValue(skill.kind, p.best)}` : "Ticked as learned"}</span>
+            <span>{shown !== undefined ? `${p.current !== undefined ? "Now" : "Best"} ${formatValue(skill.kind, shown)}` : "Ticked as learned"}</span>
             <span>Next {target !== undefined ? formatValue(skill.kind, target) : ""}</span>
           </span>
           <span className="h-1 overflow-hidden rounded-full bg-surface-2">
@@ -83,7 +86,7 @@ function Summary() {
   const running = useSettings(s => s.timerStart !== null);
   const streak = useStreak(running);
   const lvl = playerLevel(xp);
-  const mastered = [...skills.values()].filter(s => s.level >= MAX_LEVEL).length;
+  const mastered = [...skills].filter(([id, s]) => s.level >= maxLevel(kindOf(id))).length;
   const started = [...skills.values()].filter(s => s.level >= 1).length;
   const stats = [
     ["Level", `${lvl.level}`],
@@ -130,7 +133,7 @@ export default function PathPage() {
 
       {UNITS.map(({ unit, note }, i) => {
         const list = SKILLS.filter(s => s.unit === unit);
-        const done = list.filter(s => (skills.get(s.id)?.level ?? 0) >= MAX_LEVEL).length;
+        const done = list.filter(s => (skills.get(s.id)?.level ?? 0) >= maxLevel(s.kind)).length;
         return (
           <Section key={unit} num={i + 1} title={unit} note={note} aside={<span className="text-[13px] text-muted">{done} of {list.length} mastered</span>}>
             {unit === "Changes" ? (

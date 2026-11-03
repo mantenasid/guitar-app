@@ -4,7 +4,7 @@ import { startMetronome } from "@/audio/metronome";
 import { stopPlayback } from "@/audio/playback";
 import { useProgress } from "@/progress/hooks";
 import { recordResult } from "@/progress/record";
-import { METRICS, MAX_LEVEL, kindOf } from "@/skills/registry";
+import { METRICS, kindOf, maxLevel } from "@/skills/registry";
 import { LevelPips } from "./LevelPips";
 import { cardClass } from "./ui";
 
@@ -16,7 +16,8 @@ export function TempoChallenge({ skillId, hint }: { skillId: string; hint: strin
   const metric = METRICS[kind];
   const p = useProgress().skills.get(skillId);
   const level = p?.level ?? 0;
-  const nextTarget = level < MAX_LEVEL ? metric.levels[level]! : metric.levels[MAX_LEVEL - 1]!;
+  const max = maxLevel(kind);
+  const nextTarget = level < max ? metric.levels[level]! : metric.levels[max - 1]!;
   const [bpm, setBpm] = useState(nextTarget);
   const [running, setRunning] = useState(false);
   const [beats, setBeats] = useState(0);

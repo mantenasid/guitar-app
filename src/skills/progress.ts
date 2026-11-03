@@ -1,7 +1,8 @@
 // Levels, XP, unlocks and the daily plan, all worked out from saved attempts.
 // Pure functions: the same attempts always give the same progress.
 import type { Attempt } from "@/progress/db";
-import { MAX_LEVEL, METRICS, SKILLS, isBetter, kindOf, levelFor, type Skill, type SkillKind } from "./registry";
+import { bestAverage, currentSpeed } from "./changes";
+import { METRICS, SKILLS, isBetter, kindOf, levelFor, maxLevel, type Skill, type SkillKind } from "./registry";
 
 export const DAILY_XP_GOAL = 50;
 
@@ -23,11 +24,28 @@ export interface AttemptScore {
   levelAfter: number;
 }
 
-/** What one attempt earns, given the best before it and how many tries today. */
-export function scoreAttempt(kind: SkillKind, value: number, prevBest: number | undefined, triesTodayBefore: number): AttemptScore {
-  const levelBefore = levelFor(kind, prevBest);
+/** Best single value, direction-aware. */
+function bestOf(kind: SkillKind, values: readonly number[]): number | undefined {
+  let best: number | undefined;
+  for (const v of values) if (isBetter(kind, v, best)) best = v;
+  return best;
+}
+
+/**
+ * The value a level is judged on, from values in the order they were played.
+ * Changes use the best average of RECENT_DRILLS drills in a row, so one lucky
+ * minute doesn't count but a level, once reached, is kept. Others use the best value.
+ */
+export function levelValue(kind: SkillKind, values: readonly number[]): number | undefined {
+  return kind === "change" ? bestAverage(values) : bestOf(kind, values);
+}
+
+/** What one attempt earns, given the values before it (oldest first) and how many tries today. */
+export function scoreAttempt(kind: SkillKind, value: number, prevValues: readonly number[], triesTodayBefore: number): AttemptScore {
+  const prevBest = bestOf(kind, prevValues);
+  const levelBefore = levelFor(kind, levelValue(kind, prevValues));
+  const levelAfter = Math.max(levelBefore, levelFor(kind, levelValue(kind, [...prevValues, value])));
   const better = isBetter(kind, value, prevBest);
-  const levelAfter = better ? levelFor(kind, value) : levelBefore;
   let xp = triesTodayBefore < XP.attemptsPerDay ? XP.attempt : 0;
   if (prevBest === undefined) xp += XP.firstTry;
   else if (better) xp += XP.newBest;
@@ -36,8 +54,11 @@ export function scoreAttempt(kind: SkillKind, value: number, prevBest: number | 
 }
 
 export interface SkillProgress {
+  /** Best single attempt. */
   best?: number;
-  /** 0–4. A "learned" tick counts as at least level 1. */
+  /** Changes only: average of the last RECENT_DRILLS drills. */
+  current?: number;
+  /** 0 to maxLevel(kind). A "learned" tick counts as at least level 1. */
   level: number;
   attempts: number;
   lastAt?: number;
@@ -60,7 +81,7 @@ export function localDay(ms: number): string {
 
 export function computeProgress(attempts: Attempt[], learned: { skillId: string; at: number }[], now = Date.now()): Progress {
   const today = localDay(now);
-  const raw = new Map<string, { best?: number; attempts: number; lastAt?: number }>();
+  const raw = new Map<string, { best?: number; values: number[]; lastAt?: number }>();
   const triesPerDay = new Map<string, number>();
   let xp = 0;
   let xpToday = 0;
@@ -68,12 +89,12 @@ export function computeProgress(attempts: Attempt[], learned: { skillId: string;
   for (const a of [...attempts].sort((x, y) => x.at - y.at)) {
     const kind = kindOf(a.skillId);
     if (!METRICS[kind]) continue;
-    const s = raw.get(a.skillId) ?? { attempts: 0 };
+    const s = raw.get(a.skillId) ?? { values: [] };
     const dayKey = `${a.skillId}@${localDay(a.at)}`;
-    const score = scoreAttempt(kind, a.value, s.best, triesPerDay.get(dayKey) ?? 0);
+    const score = scoreAttempt(kind, a.value, s.values, triesPerDay.get(dayKey) ?? 0);
     triesPerDay.set(dayKey, (triesPerDay.get(dayKey) ?? 0) + 1);
     if (isBetter(kind, a.value, s.best)) s.best = a.value;
-    s.attempts++;
+    s.values.push(a.value);
     s.lastAt = Math.max(s.lastAt ?? 0, a.at);
     raw.set(a.skillId, s);
     xp += score.xp;
@@ -91,9 +112,11 @@ export function computeProgress(attempts: Attempt[], learned: { skillId: string;
   for (const skill of SKILLS) {
     const r = raw.get(skill.id);
     const isLearned = learnedIds.has(skill.id);
-    const level = Math.max(levelFor(skill.kind, r?.best), isLearned ? 1 : 0);
+    const values = r?.values ?? [];
+    const level = Math.max(levelFor(skill.kind, levelValue(skill.kind, values)), isLearned ? 1 : 0);
     const lastAt = Math.max(r?.lastAt ?? 0, learnedIds.get(skill.id) ?? 0) || undefined;
-    skills.set(skill.id, { best: r?.best, level, attempts: r?.attempts ?? 0, lastAt, learned: isLearned, unlocked: false });
+    const current = skill.kind === "change" ? currentSpeed(values) : undefined;
+    skills.set(skill.id, { best: r?.best, current, level, attempts: values.length, lastAt, learned: isLearned, unlocked: false });
     if (r?.best !== undefined) bests.set(skill.id, r.best);
   }
   for (const skill of SKILLS) {
@@ -125,11 +148,11 @@ export interface PlanTask {
   done: boolean;
 }
 
-/** How far a best value is towards the next level, 0–1. */
+/** How far a value (best, or current speed for changes) is towards the next level, 0–1. */
 export function progressToNext(kind: SkillKind, best: number | undefined, level: number): number {
-  if (best === undefined || level >= MAX_LEVEL) return level >= MAX_LEVEL ? 1 : 0;
+  if (best === undefined || level >= maxLevel(kind)) return level >= maxLevel(kind) ? 1 : 0;
   const m = METRICS[kind];
-  const lo = level === 0 ? (m.better === "higher" ? 0 : m.levels[0] * 2) : m.levels[level - 1]!;
+  const lo = level === 0 ? (m.better === "higher" ? 0 : m.levels[0]! * 2) : m.levels[level - 1]!;
   const hi = m.levels[level]!;
   return Math.max(0, Math.min(1, (best - lo) / (hi - lo)));
 }
@@ -149,7 +172,7 @@ export function dailyPlan(attempts: Attempt[], learned: { skillId: string; at: n
 
   const task = (skill: Skill, reason: TaskReason): PlanTask => {
     const p = before.skills.get(skill.id)!;
-    return { skill, reason, level: p.level, target: p.level < MAX_LEVEL ? METRICS[skill.kind].levels[p.level] : undefined, done: doneToday.has(skill.id) };
+    return { skill, reason, level: p.level, target: p.level < maxLevel(skill.kind) ? METRICS[skill.kind].levels[p.level] : undefined, done: doneToday.has(skill.id) };
   };
   const picked = new Set<string>();
   const out: PlanTask[] = [];
@@ -178,11 +201,11 @@ export function dailyPlan(attempts: Attempt[], learned: { skillId: string; at: n
   // 2. Closest to the next level.
   SKILLS.filter(s => {
     const p = before.skills.get(s.id)!;
-    return p.unlocked && p.attempts > 0 && p.level < MAX_LEVEL;
+    return p.unlocked && p.attempts > 0 && p.level < maxLevel(s.kind);
   })
     .map(s => {
       const p = before.skills.get(s.id)!;
-      return { s, near: progressToNext(s.kind, p.best, p.level) };
+      return { s, near: progressToNext(s.kind, p.current ?? p.best, p.level) };
     })
     .sort((a, b) => b.near - a.near)
     .slice(0, 2)
@@ -191,7 +214,7 @@ export function dailyPlan(attempts: Attempt[], learned: { skillId: string; at: n
   // 3. One new skill per track. For the hands, drill a change between chords you
   //    know before learning another chord.
   const fresh = (kind: SkillKind) =>
-    SKILLS.find(s => s.kind === kind && !picked.has(s.id) && before.skills.get(s.id)!.unlocked && before.skills.get(s.id)!.level === 0);
+    SKILLS.find(s => s.kind === kind && !picked.has(s.id) && before.skills.get(s.id)!.unlocked && before.skills.get(s.id)!.level === 0 && before.skills.get(s.id)!.attempts === 0);
   for (const s of [fresh("change") ?? fresh("chord"), fresh("strum"), fresh("scale")]) {
     if (s) add(s, "new");
   }

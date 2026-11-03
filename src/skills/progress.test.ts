@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Attempt } from "@/progress/db";
-import { DAILY_XP_GOAL, XP, computeProgress, dailyPlan, playerLevel, progressToNext, scoreAttempt } from "./progress";
+import { DAILY_XP_GOAL, XP, computeProgress, dailyPlan, levelValue, playerLevel, progressToNext, scoreAttempt } from "./progress";
 import { SKILLS, levelFor } from "./registry";
 
 const DAY = 86_400_000;
@@ -18,33 +18,47 @@ describe("levels", () => {
   });
 
   it("rates changes and tempo by speed (higher is better)", () => {
-    expect([10, 20, 59, 80].map(v => levelFor("change", v))).toEqual([0, 1, 2, 4]);
+    expect([10, 40, 59, 80].map(v => levelFor("change", v))).toEqual([0, 1, 1, 3]);
     expect([50, 60, 100, 130].map(v => levelFor("strum", v))).toEqual([0, 1, 3, 4]);
   });
 
   it("measures progress towards the next level", () => {
-    expect(progressToNext("change", 30, 1)).toBeCloseTo(0.5);
+    expect(progressToNext("change", 50, 1)).toBeCloseTo(0.5);
+    expect(progressToNext("change", 20, 0)).toBeCloseTo(0.5);
     expect(progressToNext("chord", 2.5, 1)).toBeCloseTo(0.5);
     expect(progressToNext("change", undefined, 0)).toBe(0);
-    expect(progressToNext("change", 90, 4)).toBe(1);
+    expect(progressToNext("change", 70, 3)).toBe(1);
   });
 });
 
 describe("XP", () => {
   it("rewards a first try, new bests and level-ups", () => {
-    expect(scoreAttempt("change", 22, undefined, 0)).toEqual({ xp: XP.attempt + XP.firstTry + XP.perLevel, newBest: false, levelBefore: 0, levelAfter: 1 });
-    expect(scoreAttempt("change", 25, 22, 1).xp).toBe(XP.attempt + XP.newBest);
-    expect(scoreAttempt("change", 41, 25, 2).xp).toBe(XP.attempt + XP.newBest + XP.perLevel * 2);
-    expect(scoreAttempt("change", 10, 25, 3).xp).toBe(XP.attempt);
+    expect(scoreAttempt("strum", 60, [], 0)).toEqual({ xp: XP.attempt + XP.firstTry + XP.perLevel, newBest: false, levelBefore: 0, levelAfter: 1 });
+    expect(scoreAttempt("strum", 65, [60], 1).xp).toBe(XP.attempt + XP.newBest);
+    expect(scoreAttempt("strum", 80, [60, 65], 2).xp).toBe(XP.attempt + XP.newBest + XP.perLevel * 2);
+    expect(scoreAttempt("strum", 50, [60, 65, 80], 3).xp).toBe(XP.attempt);
+  });
+
+  it("levels changes on the average of three drills in a row", () => {
+    // One fast minute is a new best, not a level.
+    expect(scoreAttempt("change", 45, [], 0)).toMatchObject({ levelAfter: 0 });
+    expect(scoreAttempt("change", 41, [38], 1)).toMatchObject({ levelAfter: 0 });
+    expect(scoreAttempt("change", 42, [38, 41], 2)).toEqual({ xp: XP.attempt + XP.newBest + XP.perLevel, newBest: true, levelBefore: 0, levelAfter: 1 });
+  });
+
+  it("keeps a change level after a bad run", () => {
+    expect(levelValue("change", [38, 42, 45, 20, 20, 20])).toBe(42);
+    const p = computeProgress([38, 42, 45, 20, 20, 20].map((v, i) => at("change:Em|Am", v, 0, 8 + i)), [], NOW);
+    expect(p.skills.get("change:Em|Am")).toMatchObject({ current: 20, level: 1, best: 45, attempts: 6 });
   });
 
   it("stops effort XP after 10 tries at one skill in a day", () => {
-    expect(scoreAttempt("change", 10, 25, XP.attemptsPerDay).xp).toBe(0);
+    expect(scoreAttempt("change", 10, [25], XP.attemptsPerDay).xp).toBe(0);
   });
 
   it("adds up across attempts and counts today's XP separately", () => {
     const p = computeProgress([at("change:A|D", 22, 1), at("change:A|D", 30)], [], NOW);
-    expect(p.xp).toBe(XP.attempt + XP.firstTry + XP.perLevel + XP.attempt + XP.newBest);
+    expect(p.xp).toBe(XP.attempt + XP.firstTry + XP.attempt + XP.newBest);
     expect(p.xpToday).toBe(XP.attempt + XP.newBest);
     expect(p.bests.get("change:A|D")).toBe(30);
   });
