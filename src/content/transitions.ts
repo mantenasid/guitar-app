@@ -54,4 +54,13 @@ export const TRANSITION_SECTIONS: TransitionSection[] = [
       {"label": "A5/A6 ↔", "root": "A5/A6", "tag": "Shuffle ↔ 7th", "pairs": [["A5/A6", "E7"], ["A5/A6", "D7"]]},
     ],
   },
+  {
+    id: "barre", title: "Barre chords",
+    rows: [
+      {"label": "Mini barre", "tag": "Into the first barres", "pairs": [["C", "Fmaj7"], ["C", "F (mini)"], ["Am", "Dm7"]]},
+      {"label": "F ↔", "root": "F", "tag": "Full barre", "pairs": [["Am", "F"], ["C", "F"], ["F", "G"]]},
+      {"label": "Bm ↔", "root": "Bm", "tag": "Full barre", "pairs": [["G", "Bm"], ["D", "Bm"]]},
+      {"label": "Moving shapes", "tag": "Slide the barre", "pairs": [["G (barre)", "C (barre)"]]},
+    ],
+  },
 ];

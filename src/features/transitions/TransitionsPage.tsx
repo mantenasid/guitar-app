@@ -6,8 +6,9 @@ import { PageHeader, PlayButton, Section, Sparkline, StageDot, TargetBar, cardCl
 import { LevelPips } from "@/components/LevelPips";
 import { formatDuration } from "@/components/AppShell";
 import * as guitar from "@/audio/guitar";
+import { startMetronome } from "@/audio/metronome";
 import { recordResult } from "@/progress/record";
-import { db } from "@/progress/db";
+import { db, recordAttempt } from "@/progress/db";
 import { useHistory, useProgress } from "@/progress/hooks";
 import { useSettings } from "@/progress/settings";
 import {
@@ -17,6 +18,9 @@ import {
 import { strumChord } from "@/features/chords/ChordCard";
 import { ChangeCounter } from "@/audio/listen/counter";
 import { useChordListener } from "@/audio/listen/useChordListener";
+import { useInput } from "@/audio/listen/useInput";
+import { defaultSource } from "@/audio/listen/listener";
+import { recentTiming, timingId, timingScore } from "@/skills/timing";
 import { nearTwins } from "@/audio/listen/rivals";
 import { ListenPanel } from "@/components/ListenPanel";
 
@@ -53,6 +57,13 @@ const PRIMER_SECONDS = 5;
 
 type Phase = "idle" | "primer" | "running";
 
+/** Seconds from a click being scheduled to the player hearing it; the dev synth source has none. */
+function playLatency(): number {
+  if (defaultSource() === "synth") return 0;
+  const ctx = guitar.audioContext();
+  return (ctx.outputLatency || 0) + ctx.baseLatency;
+}
+
 function Drill({ a, b, onPick, skills }: { a: string; b: string; onPick: (a: string, b: string) => void; skills: PairSkills }) {
   const [secs, setSecs] = useState(DRILL_SECONDS);
   const [phase, setPhase] = useState<Phase>("idle");
@@ -70,6 +81,9 @@ function Drill({ a, b, onPick, skills }: { a: string; b: string; onPick: (a: str
   const counter = useRef(new ChangeCounter());
   /** When "Go" sounded; the beep itself must not count as a strum. */
   const goAt = useRef(0);
+  /** Pacer clicks and heard strums during the minute, on the audio clock, for the timing score. */
+  const clicks = useRef<number[]>([]);
+  const strums = useRef<number[]>([]);
 
   const p = pairProgress(skills, a, b);
   const speed = p.current ?? 0;
@@ -77,6 +91,7 @@ function Drill({ a, b, onPick, skills }: { a: string; b: string; onPick: (a: str
   const st = stageOf(p.level, p.attempts > 0);
   const nextLevel = CHANGE_LEVELS[p.level];
   const history = useHistory(changeSkillId(a, b)).map(h => h.value);
+  const timing = recentTiming(useHistory(timingId(pairKey(a, b)), 3).map(h => h.value));
   const chordA = CHORD_BY_KEY[a]!;
   const chordB = CHORD_BY_KEY[b]!;
 
@@ -97,6 +112,14 @@ function Drill({ a, b, onPick, skills }: { a: string; b: string; onPick: (a: str
   }, {
     onStrum: () => {
       if (twins && phaseRef.current === "running" && Date.now() - goAt.current > 400) add(1);
+    },
+  });
+
+  // Timing needs both the pacer to play along to and the mic to hear the strums.
+  const timingOn = pacer && listen.on && phase !== "idle";
+  useInput(timingOn, {
+    onStrum: t => {
+      if (phaseRef.current === "running") strums.current.push(t);
     },
   });
 
@@ -122,7 +145,9 @@ function Drill({ a, b, onPick, skills }: { a: string; b: string; onPick: (a: str
     const id = changeSkillId(r.a, r.b);
     const previous = (await db.attempts.where("skillId").equals(id).sortBy("at")).map(x => x.value);
     await recordResult(id, r.count);
-    setResult(drillFeedback(r.count, previous));
+    const onClick = timingScore(strums.current, clicks.current, playLatency());
+    if (onClick !== null) await recordAttempt(timingId(pairKey(r.a, r.b)), onClick);
+    setResult(drillFeedback(r.count, previous) + (onClick !== null ? ` ${onClick}% of strums on the click.` : ""));
   }, []);
 
   // Countdown, plus the pacer click at goal speed.
@@ -136,10 +161,10 @@ function Drill({ a, b, onPick, skills }: { a: string; b: string; onPick: (a: str
       if (remaining <= 0) void finish(r);
     }, 100);
     const rate = goal ?? 20;
-    const pace = pacer ? setInterval(() => guitar.click(), 60000 / rate) : undefined;
+    const stopPacer = pacer ? startMetronome(() => rate, (_, when) => clicks.current.push(when)) : undefined;
     return () => {
       clearInterval(tick);
-      if (pace) clearInterval(pace);
+      stopPacer?.();
     };
   }, [run !== null, pacer, goal, finish]);
 
@@ -179,6 +204,8 @@ function Drill({ a, b, onPick, skills }: { a: string; b: string; onPick: (a: str
       // Keep the chord already being held; only changes from here on count.
       counter.current.count = 0;
       goAt.current = Date.now();
+      clicks.current = [];
+      strums.current = [];
       setPhase("running");
       setRun({ a, b, secs, end: Date.now() + secs * 1000, count: 0 });
       setLeft(secs);
@@ -255,9 +282,10 @@ function Drill({ a, b, onPick, skills }: { a: string; b: string; onPick: (a: str
             <input type="checkbox" checked={pacer} onChange={e => setPacer(e.target.checked)} /> Pacer click at goal speed
           </label>
           <div className="flex flex-col gap-2 border-t border-line pt-3">
-            <div className="grid grid-cols-3 gap-1.5">
+            <div className="grid grid-cols-2 gap-x-1.5 gap-y-2.5">
               {[
                 ["Current", speed || "–", p.attempts && p.attempts < RECENT_DRILLS ? `from ${p.attempts} drill${p.attempts === 1 ? "" : "s"}` : `last ${RECENT_DRILLS} avg`],
+                ["Timing", timing !== undefined ? `${timing}%` : "–", timing !== undefined ? "on the click" : "turn on pacer + mic"],
                 ["Goal", goal || "–", "pacer speed"],
                 ["Next level", nextLevel ?? "Done", nextLevel ? `level ${p.level + 1}` : "mastered"],
               ].map(([k, v, note]) => (

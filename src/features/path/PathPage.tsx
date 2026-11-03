@@ -17,6 +17,13 @@ const UNITS: { unit: string; note: string }[] = [
   { unit: "Blues chords", note: "Dominant 7ths for the 12-bar blues." },
   { unit: "Shuffles", note: "Hold one finger, bounce another." },
   { unit: "Power chords", note: "Two-note shapes, open and movable." },
+  { unit: "Barre chords", note: "Opens after C: a two-string barre, then full E and A shapes." },
+  { unit: "Fretboard notes", note: "Name any note on the neck, one string at a time." },
+  { unit: "Warm-ups", note: "Finger independence and stretch, claimed at a clean tempo." },
+  { unit: "Fingerpicking", note: "Thumb on the bass, fingers on top. Claim a clean tempo for each pattern." },
+  { unit: "Arpeggios", note: "Opens after the first scale: chord tones one at a time, in movable shapes." },
+  { unit: "Ear training", note: "Ten questions a round. Major or minor first, then qualities, your own chords and changes." },
+  { unit: "Play-along", note: "Opens once you can make each change in a progression at 40 a minute." },
 ];
 
 function Lock() {

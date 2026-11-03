@@ -66,6 +66,17 @@ export const Fretboard = memo(function Fretboard({ shape, scope, fluid, classNam
         );
       })}
 
+      {shape.barre && (
+        <rect
+          className="fb-dot f1"
+          x={X0 + (shape.barre.f - shape.startFret) * FRET_W + FRET_W / 2 - R}
+          y={y(shape.barre.from) - R}
+          width={R * 2}
+          height={y(shape.barre.to) - y(shape.barre.from) + R * 2}
+          rx={R}
+        />
+      )}
+
       {notes.map(n => {
         const key = `${n.s}:${n.f}`;
         const onClick = (e: React.MouseEvent) => {

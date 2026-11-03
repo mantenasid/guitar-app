@@ -8,13 +8,17 @@ import { useProgress } from "@/progress/hooks";
 import { DAILY_XP_GOAL, playerLevel } from "@/skills/progress";
 import { Toasts } from "./Toasts";
 
+/** Pages that belong to the gym, so its tab stays lit on them. */
+const GYM_PATHS = ["/gym", "/path", "/play", "/chords", "/transitions", "/strumming", "/scales", "/fretboard", "/warmups", "/fingerpicking", "/arpeggios", "/progressions"];
+
 const LINKS = [
-  { to: "/path", label: "Path" },
-  { to: "/chords", label: "Chords" },
-  { to: "/transitions", label: "Transitions" },
-  { to: "/strumming", label: "Strumming" },
-  { to: "/scales", label: "Scales" },
+  { to: "/", label: "Home", paths: ["/"] },
+  { to: "/tuner", label: "Tuner", paths: ["/tuner"] },
+  { to: "/gym", label: "Gym", paths: GYM_PATHS },
+  { to: "/ear", label: "Ear training", paths: ["/ear"] },
 ];
+
+const isUnder = (pathname: string, paths: string[]) => paths.some(p => (p === "/" ? pathname === "/" : pathname === p || pathname.startsWith(p + "/")));
 
 export function formatDuration(sec: number) {
   sec = Math.floor(sec);
@@ -109,9 +113,7 @@ export function AppShell() {
             <NavLink
               key={l.to}
               to={l.to}
-              className={({ isActive }) =>
-                `whitespace-nowrap border-b-2 py-3 text-sm sm:pt-[21px] sm:pb-[19px] ${isActive ? "border-ink text-ink" : "border-transparent text-muted hover:text-ink"}`
-              }
+              className={`whitespace-nowrap border-b-2 py-3 text-sm sm:pt-[21px] sm:pb-[19px] ${isUnder(pathname, l.paths) ? "border-ink text-ink" : "border-transparent text-muted hover:text-ink"}`}
             >
               {l.label}
             </NavLink>

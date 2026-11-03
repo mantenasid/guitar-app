@@ -137,7 +137,7 @@ export function playerLevel(xp: number) {
 /** Days before a skill should be practised again, by level (spaced repetition). */
 export const REVIEW_AFTER_DAYS = [0, 1, 2, 4, 10];
 
-export type TaskReason = "review" | "level-up" | "new";
+export type TaskReason = "warm-up" | "review" | "level-up" | "new";
 
 export interface PlanTask {
   skill: Skill;
@@ -160,9 +160,9 @@ export function progressToNext(kind: SkillKind, best: number | undefined, level:
 /**
  * Today's plan, chosen from progress as it stood at the start of the day so it
  * doesn't reshuffle while you work through it: overdue reviews, the skills
- * closest to their next level, and new unlocks on both tracks.
+ * closest to their next level, and new unlocks on each track, after a warm-up.
  */
-export function dailyPlan(attempts: Attempt[], learned: { skillId: string; at: number }[], now = Date.now(), size = 5): PlanTask[] {
+export function dailyPlan(attempts: Attempt[], learned: { skillId: string; at: number }[], now = Date.now(), size = 7): PlanTask[] {
   const dayStart = new Date(now);
   dayStart.setHours(0, 0, 0, 0);
   const startOfDay = dayStart.getTime();
@@ -187,6 +187,11 @@ export function dailyPlan(attempts: Attempt[], learned: { skillId: string; at: n
     return p.unlocked && p.level >= 1;
   });
 
+  // 0. Warm up first: the earliest unlocked warm-up not yet mastered, else the last one.
+  const warmups = SKILLS.filter(s => s.kind === "warmup" && before.skills.get(s.id)!.unlocked);
+  const warmup = warmups.find(s => before.skills.get(s.id)!.level < maxLevel(s.kind)) ?? warmups.at(-1);
+  if (warmup) add(warmup, "warm-up");
+
   // 1. Overdue reviews, most overdue first.
   started
     .map(s => {
@@ -201,7 +206,7 @@ export function dailyPlan(attempts: Attempt[], learned: { skillId: string; at: n
   // 2. Closest to the next level.
   SKILLS.filter(s => {
     const p = before.skills.get(s.id)!;
-    return p.unlocked && p.attempts > 0 && p.level < maxLevel(s.kind);
+    return s.kind !== "warmup" && p.unlocked && p.attempts > 0 && p.level < maxLevel(s.kind);
   })
     .map(s => {
       const p = before.skills.get(s.id)!;
@@ -215,7 +220,7 @@ export function dailyPlan(attempts: Attempt[], learned: { skillId: string; at: n
   //    know before learning another chord.
   const fresh = (kind: SkillKind) =>
     SKILLS.find(s => s.kind === kind && !picked.has(s.id) && before.skills.get(s.id)!.unlocked && before.skills.get(s.id)!.level === 0 && before.skills.get(s.id)!.attempts === 0);
-  for (const s of [fresh("change") ?? fresh("chord"), fresh("strum"), fresh("scale")]) {
+  for (const s of [fresh("change") ?? fresh("chord"), fresh("strum"), fresh("scale"), fresh("note"), fresh("pick"), fresh("ear"), fresh("prog")]) {
     if (s) add(s, "new");
   }
   return out;

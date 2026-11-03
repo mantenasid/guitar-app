@@ -80,4 +80,35 @@ export const CHORD_GROUPS: ChordGroup[] = [
       },
     ],
   },
+  {
+    id: "barre", title: "Barre chords", note: "Build the barre a step at a time: two strings, then all six. Press with the bony edge of your index, thumb behind the neck.",
+    sections: [
+      {
+        title: "Mini barre",
+        chords: [
+          { key: "Fmaj7", name: "F Major 7 (Fmaj7)", tag: "No Barre Yet: The Shape F Grows From", shape: {"startFret": 1, "nut": true, "muted": [5, 6], "open": [1], "root": "F", "dots": [{"s": 4, "f": 3, "finger": 3}, {"s": 3, "f": 2, "finger": 2}, {"s": 2, "f": 1, "finger": 1}]} },
+          { key: "Dm7", name: "D Minor 7 (Dm7)", tag: "Index Flat Over 2 Strings", shape: {"startFret": 1, "nut": true, "muted": [5, 6], "open": [4], "root": "D", "barre": {"f": 1, "from": 1, "to": 2}, "dots": [{"s": 3, "f": 2, "finger": 2}, {"s": 2, "f": 1, "finger": 1}, {"s": 1, "f": 1, "finger": 1}]} },
+          { key: "F (mini)", name: "F Major (Mini Barre)", tag: "Fmaj7 + Index Over the Top 2", shape: {"startFret": 1, "nut": true, "muted": [5, 6], "root": "F", "barre": {"f": 1, "from": 1, "to": 2}, "dots": [{"s": 4, "f": 3, "finger": 3}, {"s": 3, "f": 2, "finger": 2}, {"s": 2, "f": 1, "finger": 1}, {"s": 1, "f": 1, "finger": 1}]} },
+        ],
+      },
+      {
+        title: "Full barre, root on the 6th string",
+        chords: [
+          { key: "F", name: "F Major (Full Barre)", tag: "E Shape, Barre at Fret 1", shape: {"startFret": 1, "nut": true, "root": "F", "barre": {"f": 1, "from": 1, "to": 6}, "dots": [{"s": 6, "f": 1, "finger": 1}, {"s": 5, "f": 3, "finger": 3}, {"s": 4, "f": 3, "finger": 4}, {"s": 3, "f": 2, "finger": 2}, {"s": 2, "f": 1, "finger": 1}, {"s": 1, "f": 1, "finger": 1}]} },
+          { key: "Fm", name: "F Minor (Fm)", tag: "Em Shape, Barre at Fret 1", shape: {"startFret": 1, "nut": true, "root": "F", "barre": {"f": 1, "from": 1, "to": 6}, "dots": [{"s": 6, "f": 1, "finger": 1}, {"s": 5, "f": 3, "finger": 3}, {"s": 4, "f": 3, "finger": 4}, {"s": 3, "f": 1, "finger": 1}, {"s": 2, "f": 1, "finger": 1}, {"s": 1, "f": 1, "finger": 1}]} },
+          { key: "F7", name: "F7 (Barre)", tag: "E7 Shape, Barre at Fret 1", shape: {"startFret": 1, "nut": true, "root": "F", "barre": {"f": 1, "from": 1, "to": 6}, "dots": [{"s": 6, "f": 1, "finger": 1}, {"s": 5, "f": 3, "finger": 3}, {"s": 4, "f": 1, "finger": 1}, {"s": 3, "f": 2, "finger": 2}, {"s": 2, "f": 1, "finger": 1}, {"s": 1, "f": 1, "finger": 1}]} },
+          { key: "G (barre)", name: "G Major (Barre)", tag: "Same F Shape, Slid to Fret 3", shape: {"startFret": 3, "root": "G", "barre": {"f": 3, "from": 1, "to": 6}, "dots": [{"s": 6, "f": 3, "finger": 1}, {"s": 5, "f": 5, "finger": 3}, {"s": 4, "f": 5, "finger": 4}, {"s": 3, "f": 4, "finger": 2}, {"s": 2, "f": 3, "finger": 1}, {"s": 1, "f": 3, "finger": 1}]} },
+        ],
+      },
+      {
+        title: "Full barre, root on the 5th string",
+        chords: [
+          { key: "Bm7", name: "B Minor 7 (Bm7)", tag: "A Shape, Barre at Fret 2, 2 Fingers", shape: {"startFret": 1, "nut": true, "muted": [6], "root": "B", "barre": {"f": 2, "from": 1, "to": 5}, "dots": [{"s": 5, "f": 2, "finger": 1}, {"s": 4, "f": 4, "finger": 3}, {"s": 3, "f": 2, "finger": 1}, {"s": 2, "f": 3, "finger": 2}, {"s": 1, "f": 2, "finger": 1}]} },
+          { key: "Bm", name: "B Minor (Bm)", tag: "Am Shape, Barre at Fret 2", shape: {"startFret": 1, "nut": true, "muted": [6], "root": "B", "barre": {"f": 2, "from": 1, "to": 5}, "dots": [{"s": 5, "f": 2, "finger": 1}, {"s": 4, "f": 4, "finger": 3}, {"s": 3, "f": 4, "finger": 4}, {"s": 2, "f": 3, "finger": 2}, {"s": 1, "f": 2, "finger": 1}]} },
+          { key: "Bb", name: "B♭ Major (Bb)", tag: "A Shape, Barre at Fret 1", shape: {"startFret": 1, "nut": true, "muted": [6], "root": "Bb", "barre": {"f": 1, "from": 1, "to": 5}, "dots": [{"s": 5, "f": 1, "finger": 1}, {"s": 4, "f": 3, "finger": 2}, {"s": 3, "f": 3, "finger": 3}, {"s": 2, "f": 3, "finger": 4}, {"s": 1, "f": 1, "finger": 1}]} },
+          { key: "C (barre)", name: "C Major (Barre)", tag: "Same B♭ Shape, Slid to Fret 3", shape: {"startFret": 3, "muted": [6], "root": "C", "barre": {"f": 3, "from": 1, "to": 5}, "dots": [{"s": 5, "f": 3, "finger": 1}, {"s": 4, "f": 5, "finger": 2}, {"s": 3, "f": 5, "finger": 3}, {"s": 2, "f": 5, "finger": 4}, {"s": 1, "f": 3, "finger": 1}]} },
+        ],
+      },
+    ],
+  },
 ];

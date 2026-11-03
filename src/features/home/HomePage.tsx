@@ -56,6 +56,7 @@ function Week() {
 }
 
 const REASON: Record<TaskReason, { label: string; cls: string }> = {
+  "warm-up": { label: "Warm up", cls: "bg-surface-2 text-ink-2" },
   review: { label: "Review", cls: "bg-surface-2 text-ink-2" },
   "level-up": { label: "Level up", cls: "bg-accent-soft text-accent" },
   new: { label: "New", cls: "bg-good-soft text-good" },

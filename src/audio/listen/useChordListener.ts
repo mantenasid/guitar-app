@@ -3,14 +3,12 @@ import { CHORD_BY_KEY } from "@/content";
 import { chordVoicing } from "@/music/shapes";
 import { useSettings } from "@/progress/settings";
 import { DEFAULT_MATCH, LEARNED_MATCH, averageChroma, chordTemplate, matchChord, type Candidate, type Chroma } from "./chroma";
-import { ChordListener, type Source } from "./listener";
+import { ChordListener, defaultSource } from "./listener";
 import { usePrints } from "./prints";
 
 export type ListenStatus = "off" | "starting" | "listening" | "denied" | "unsupported" | "error";
 
-/** In development, `?listen=synth` analyses the app's own synth instead of the mic. */
-const source = (): Source =>
-  import.meta.env.DEV && new URLSearchParams(location.search).get("listen") === "synth" ? "synth" : "mic";
+const source = defaultSource;
 
 export function theoryCandidates(keys: string[]): Candidate[] {
   return keys.filter(k => CHORD_BY_KEY[k]).map(k => ({ id: k, template: chordTemplate(chordVoicing(CHORD_BY_KEY[k]!.shape).map(n => n.midi)) }));

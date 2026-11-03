@@ -12,10 +12,10 @@ describe("pairs", () => {
     expect(changeSkillId("C", "G")).toBe("change:G|C");
   });
 
-  it("has 84 distinct pairs, all 28 open-chord pairs first", () => {
-    expect(ALL_PAIRS).toHaveLength(84);
+  it("has 93 distinct pairs, all 28 open-chord pairs first", () => {
+    expect(ALL_PAIRS).toHaveLength(93);
     expect(ALL_PAIRS.filter(p => p.section === "basic")).toHaveLength(28);
-    expect(new Set(ALL_PAIRS.map(p => p.key)).size).toBe(84);
+    expect(new Set(ALL_PAIRS.map(p => p.key)).size).toBe(93);
   });
 });
 
@@ -81,7 +81,16 @@ describe("suggestions", () => {
 
 describe("skill registry", () => {
   it("registers every skill once", () => {
-    expect(SKILLS).toHaveLength(28 + 84 + 29 + 16);
+    expect(SKILLS).toHaveLength(39 + 93 + 29 + 16 + 6 + 8 + 10 + 9 + 4 + 7);
     expect(new Set(SKILLS.map(s => s.id)).size).toBe(SKILLS.length);
+  });
+
+  it("starts the barre chords after C, chained within their unit", () => {
+    const req = (id: string) => SKILLS.find(s => s.id === id)!.requires;
+    expect(req("chord:Fmaj7")).toEqual(["chord:C"]);
+    expect(req("chord:F")).toEqual(["chord:F (mini)"]);
+    expect(req("chord:E7")).toEqual(["chord:C"]);
+    expect(req("chord:Fmaj7")).not.toContain("chord:D5 (movable)");
+    expect(SKILLS.filter(s => s.unit === "Barre chords")).toHaveLength(11);
   });
 });

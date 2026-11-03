@@ -1,6 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router";
-import { CHORD_GROUPS } from "@/content";
+import { Link, useSearchParams } from "react-router";
+import { ALL_CHORDS, CHORD_GROUPS } from "@/content";
 import { CardGrid, DiagramLegend, PageHeader, Section, Tabs, TargetBar, cardClass } from "@/components/ui";
 import { useProgress } from "@/progress/hooks";
 import { ALL_PAIRS, CHANGE_LEVELS, CHANGE_TARGET, pairProgress, suggestedPairs, summarise } from "@/skills/changes";
@@ -33,13 +32,15 @@ function ChangeGoal() {
 }
 
 export default function ChordsPage() {
-  const [filter, setFilter] = useState("all");
+  const [params, setParams] = useSearchParams();
+  const filter = params.get("group") ?? "all";
+  const setFilter = (g: string) => setParams(g === "all" ? {} : { group: g }, { replace: true });
   const skills = useProgress().skills;
   return (
     <>
       <PageHeader
         title="Chords"
-        lead="28 shapes, from the first open chords to movable power chords. Tap any dot to hear it."
+        lead={`${ALL_CHORDS.length} shapes, from the first open chords to full barres. Tap any dot to hear it.`}
         aside={
           <Tabs
             value={filter}

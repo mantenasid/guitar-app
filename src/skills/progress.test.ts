@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Attempt } from "@/progress/db";
 import { DAILY_XP_GOAL, XP, computeProgress, dailyPlan, levelValue, playerLevel, progressToNext, scoreAttempt } from "./progress";
+import { changeSkillId } from "./changes";
 import { SKILLS, levelFor } from "./registry";
 
 const DAY = 86_400_000;
@@ -72,10 +73,10 @@ describe("XP", () => {
 });
 
 describe("unlocks", () => {
-  it("starts with Em, the first pattern and the first scale", () => {
+  it("starts with Em, the first pattern, scale and note set", () => {
     const p = computeProgress([], [], NOW);
     const unlocked = SKILLS.filter(s => p.skills.get(s.id)!.unlocked).map(s => s.id);
-    expect(unlocked).toEqual(["chord:Em", "strum:1", "scale:first-position"]);
+    expect(unlocked).toEqual(["chord:Em", "strum:1", "scale:first-position", "note:low-e", "warmup:spider-1234", "pick:thumb", "ear:major-minor"]);
   });
 
   it("unlocks the next chord, and the change between known chords", () => {
@@ -91,12 +92,29 @@ describe("unlocks", () => {
     expect(p.skills.get("chord:Am")!.unlocked).toBe(true);
     expect(p.xpToday).toBe(XP.learnedTick);
   });
+
+  it("opens a progression once each of its changes reaches level 1", () => {
+    const drills = (a: string, b: string) => [40, 40, 40].map((v, i) => at(changeSkillId(a, b), v, 1, 8 + i));
+    const chords = ["A", "D", "E"].map(c => ({ skillId: `chord:${c}`, at: NOW }));
+    const two = computeProgress([...drills("A", "D"), ...drills("A", "E")], chords, NOW);
+    expect(two.skills.get("prog:i-iv-v-a")!.unlocked).toBe(false);
+    const all = computeProgress([...drills("A", "D"), ...drills("A", "E"), ...drills("D", "E")], chords, NOW);
+    expect(all.skills.get("prog:i-iv-v-a")!.unlocked).toBe(true);
+  });
 });
 
 describe("daily plan", () => {
-  it("gives a beginner one new skill per track", () => {
+  it("gives a beginner a warm-up, then one new skill per track", () => {
     const plan = dailyPlan([], [], NOW);
-    expect(plan.map(t => [t.skill.id, t.reason])).toEqual([["chord:Em", "new"], ["strum:1", "new"], ["scale:first-position", "new"]]);
+    expect(plan.map(t => [t.skill.id, t.reason])).toEqual([
+      ["warmup:spider-1234", "warm-up"],
+      ["chord:Em", "new"],
+      ["strum:1", "new"],
+      ["scale:first-position", "new"],
+      ["note:low-e", "new"],
+      ["pick:thumb", "new"],
+      ["ear:major-minor", "new"],
+    ]);
   });
 
   it("prefers a change between known chords over a new chord", () => {
@@ -107,7 +125,8 @@ describe("daily plan", () => {
 
   it("brings back skills that are due for review", () => {
     const plan = dailyPlan([at("chord:Em", 1.9, 5)], [], NOW);
-    expect(plan[0]).toMatchObject({ reason: "review", level: 2, target: 1.5 });
+    expect(plan[0]?.reason).toBe("warm-up");
+    expect(plan[1]).toMatchObject({ reason: "review", level: 2, target: 1.5 });
   });
 
   it("does not reshuffle during the day, and ticks off what you did", () => {
@@ -118,8 +137,8 @@ describe("daily plan", () => {
     expect(evening.find(t => t.skill.id === "chord:Em")?.done).toBe(true);
   });
 
-  it("never plans more than 5 tasks", () => {
+  it("never plans more than 7 tasks", () => {
     const lots = SKILLS.slice(0, 20).map((s, i) => at(s.id, s.kind === "chord" ? 2.5 : 30, 3 + i));
-    expect(dailyPlan(lots, [], NOW).length).toBeLessThanOrEqual(5);
+    expect(dailyPlan(lots, [], NOW).length).toBeLessThanOrEqual(7);
   });
 });

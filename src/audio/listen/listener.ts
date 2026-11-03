@@ -11,12 +11,33 @@ export interface Frame {
 
 export type Source = "mic" | "synth";
 
+/** In development, `?listen=synth` analyses the app's own synth instead of the mic. */
+export const defaultSource = (): Source =>
+  import.meta.env.DEV && new URLSearchParams(location.search).get("listen") === "synth" ? "synth" : "mic";
+
+export interface Input {
+  node: AudioNode;
+  close: () => void;
+}
+
+/** Opens the mic (raw signal) or the synth's output as an audio node to analyse. */
+export async function openInput(source: Source): Promise<Input> {
+  const ctx = audioContext();
+  if (ctx.state === "suspended") await ctx.resume();
+  if (source === "synth") return { node: synthOutput(), close: () => {} };
+  // Voice processing (echo cancellation, noise suppression, auto gain) mangles
+  // instrument sound, so ask for the raw signal.
+  const stream = await navigator.mediaDevices.getUserMedia({
+    audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+  });
+  return { node: ctx.createMediaStreamSource(stream), close: () => stream.getTracks().forEach(t => t.stop()) };
+}
+
 const FFT_SIZE = 8192;
 const FRAME_MS = 40;
 
 export class ChordListener {
-  private stream: MediaStream | null = null;
-  private input: AudioNode | null = null;
+  private input: Input | null = null;
   private analyser: AnalyserNode | null = null;
   private timer: ReturnType<typeof setInterval> | null = null;
 
@@ -25,22 +46,12 @@ export class ChordListener {
   async start(source: Source) {
     this.stop();
     const ctx = audioContext();
-    if (ctx.state === "suspended") await ctx.resume();
     const analyser = ctx.createAnalyser();
     analyser.fftSize = FFT_SIZE;
     analyser.smoothingTimeConstant = 0.4;
 
-    if (source === "mic") {
-      // Voice processing (echo cancellation, noise suppression, auto gain) mangles
-      // instrument sound, so ask for the raw signal.
-      this.stream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
-      });
-      this.input = ctx.createMediaStreamSource(this.stream);
-    } else {
-      this.input = synthOutput();
-    }
-    this.input.connect(analyser);
+    this.input = await openInput(source);
+    this.input.node.connect(analyser);
     this.analyser = analyser;
 
     const db = new Float32Array(analyser.frequencyBinCount);
@@ -61,12 +72,11 @@ export class ChordListener {
     if (this.timer) clearInterval(this.timer);
     this.timer = null;
     try {
-      if (this.input && this.analyser) this.input.disconnect(this.analyser);
+      if (this.input && this.analyser) this.input.node.disconnect(this.analyser);
     } catch {
       // Already disconnected.
     }
-    this.stream?.getTracks().forEach(t => t.stop());
-    this.stream = null;
+    this.input?.close();
     this.input = null;
     this.analyser = null;
   }

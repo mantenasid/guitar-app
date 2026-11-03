@@ -24,14 +24,10 @@ export function slotTimes(count: string[], swing: boolean): { times: number[]; b
 
 export const isSwing = (p: StrumPattern) => /shuffle|swing|swung/i.test(`${p.name} ${p.tag}`);
 
-export interface StrumOptions {
-  bpm: number;
-  click: boolean;
+export interface StrumOptions extends BarLoopOptions {
   sound: boolean;
   /** Chord notes, low to high. */
   notes: number[];
-  /** Called when a slot starts sounding (-1 when the bar ends). */
-  onSlot: (index: number) => void;
 }
 
 function hit(tok: string, notes: number[], when: number) {
@@ -45,24 +41,34 @@ function hit(tok: string, notes: number[], when: number) {
   else if (tok === "P") guitar.strum(notes.slice(0, 3), { when, dir: "down", gain: 0.6, damped: true, spread: 0.008 });
 }
 
-/** Loops a pattern after a one-bar count-in until `stop()` is called. */
-export function startStrumLoop(pattern: StrumPattern, getOptions: () => StrumOptions) {
+export interface BarLoopOptions {
+  bpm: number;
+  click: boolean;
+  /** Called when a slot starts sounding (-1 when the bar ends). */
+  onSlot: (index: number) => void;
+}
+
+/**
+ * Loops one bar of `count` after a one-bar count-in until `stop()` is called.
+ * `play` sounds slot `i` at audio time `when`; options are read again every bar.
+ */
+export function startBarLoop<O extends BarLoopOptions>(count: string[], swing: boolean, getOptions: () => O, play: (i: number, when: number, o: O) => void) {
   const timers: ReturnType<typeof setTimeout>[] = [];
   let countIn = true;
   let next = guitar.now() + 0.1;
+  const { times, beats } = slotTimes(count, swing);
 
   const scheduleBar = (barStart: number) => {
     const o = getOptions();
     const spb = 60 / o.bpm;
-    const { times, beats } = slotTimes(pattern.count, isSwing(pattern));
     const t = guitar.now();
     if (o.click || countIn) {
       for (let b = 0; b < beats; b++) guitar.click({ when: barStart + b * spb, accent: b === 0 && !countIn });
     }
     if (!countIn) {
-      pattern.slots.forEach((tok, i) => {
-        const when = barStart + times[i]! * spb;
-        if (o.sound) hit(tok, o.notes, when);
+      times.forEach((time, i) => {
+        const when = barStart + time * spb;
+        play(i, when, o);
         timers.push(setTimeout(() => o.onSlot(i), Math.max(0, (when - t) * 1000)));
       });
       timers.push(setTimeout(() => o.onSlot(-1), Math.max(0, (barStart + beats * spb - t) * 1000)));
@@ -82,4 +88,11 @@ export function startStrumLoop(pattern: StrumPattern, getOptions: () => StrumOpt
     clearInterval(interval);
     timers.forEach(clearTimeout);
   };
+}
+
+/** Loops a pattern after a one-bar count-in until `stop()` is called. */
+export function startStrumLoop(pattern: StrumPattern, getOptions: () => StrumOptions) {
+  return startBarLoop(pattern.count, isSwing(pattern), getOptions, (i, when, o) => {
+    if (o.sound) hit(pattern.slots[i]!, o.notes, when);
+  });
 }
