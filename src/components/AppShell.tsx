@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { NavLink, Outlet, useLocation } from "react-router";
 import { stopPlayback } from "@/audio/playback";
 import { applyTheme, useSettings, type Theme } from "@/progress/settings";
+import { Haze } from "./Haze";
 import { Toasts } from "./Toasts";
 
 /** Pages that belong to the gym, so its tab stays lit on them. */
@@ -27,6 +28,22 @@ export function formatDuration(sec: number) {
 const THEMES: Theme[] = ["auto", "light", "dark"];
 const THEME_ICON: Record<Theme, string> = { auto: "◐", light: "☀︎", dark: "☾" };
 
+/** A guitar pick with a soft light across it, for the brand. */
+function PickMark() {
+  return (
+    <svg viewBox="0 0 20 22" className="size-5" aria-hidden>
+      <defs>
+        <linearGradient id="pick" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#fdba74" />
+          <stop offset="1" stopColor="#c2410c" />
+        </linearGradient>
+      </defs>
+      <path d="M10 21C6 17 1 10.5 1 6.5 1 3 4.5 1 10 1s9 2 9 5.5C19 10.5 14 17 10 21Z" fill="url(#pick)" />
+      <path d="M5 5.5c1.5-1.3 3.4-1.8 6-1.6" stroke="white" strokeOpacity=".55" strokeWidth="1.3" strokeLinecap="round" fill="none" />
+    </svg>
+  );
+}
+
 function ThemeToggle() {
   const theme = useSettings(s => s.theme);
   const setTheme = useSettings(s => s.setTheme);
@@ -35,7 +52,7 @@ function ThemeToggle() {
     <button
       onClick={() => setTheme(THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length]!)}
       title={`Theme: ${theme} (click to change)`}
-      className="rounded-lg px-2.5 py-1.5 text-[13px] text-muted hover:bg-surface-2 hover:text-ink"
+      className="rounded-lg px-2.5 py-1.5 text-[13px] text-muted transition duration-200 ease-in-out hover:bg-surface-2 hover:text-ink"
     >
       {THEME_ICON[theme]}
     </button>
@@ -53,30 +70,41 @@ export function AppShell() {
 
   const home = pathname === "/";
   const nav = (
-    <nav
-      className={`no-print mx-4 flex flex-wrap items-center gap-x-7 border-b border-line pt-3 sm:mx-auto sm:h-16 sm:w-[calc(100%-3.5rem)] sm:max-w-[1024px] sm:flex-nowrap sm:pt-0 ${
-        // On home the nav floats over the photo, so it always uses light text whatever the theme.
-        home ? "z-10 self-start [--ink:#f4f4f5] [--line:rgb(255_255_255/0.12)] [--muted:#c4c4c8] [--surface-2:rgb(255_255_255/0.1)] [grid-area:1/1]" : ""
+    <header
+      className={`no-print z-20 px-3 pt-3 sm:px-6 sm:pt-4 ${
+        home
+          ? // On home the bar floats over the photo, so it is always dark whatever the theme.
+            "self-start [--bg:#0f0f11] [--ink:#f4f4f5] [--line:rgb(255_255_255/0.1)] [--muted:#a1a1aa] [--surface-2:rgb(255_255_255/0.08)] [--surface:#0f0f11] [grid-area:1/1]"
+          : "sticky top-0"
       }`}
     >
-      <NavLink to="/" className="whitespace-nowrap text-[15px] font-[650] tracking-[-0.01em] text-ink">
-        Guitar Practice
-      </NavLink>
-      <div className="no-scrollbar order-3 flex w-full gap-5 overflow-x-auto sm:order-none sm:w-auto sm:flex-1 sm:gap-[22px]">
-        {LINKS.map(l => (
+      <nav className="mx-auto flex max-w-[1080px] flex-wrap items-center gap-x-6 rounded-2xl border border-line bg-surface/70 px-3 shadow-card backdrop-blur-xl sm:h-14 sm:flex-nowrap sm:pr-2.5 sm:pl-4">
+        <NavLink to="/" className="flex h-12 items-center gap-2.5 whitespace-nowrap text-[15px] font-[650] tracking-[-0.01em] text-ink sm:h-auto">
+          <PickMark />
+          Guitar Practice
+        </NavLink>
+        <div className="no-scrollbar order-3 -mx-1 flex w-full gap-1 overflow-x-auto pb-2 sm:order-none sm:mx-0 sm:w-auto sm:flex-1 sm:justify-center sm:pb-0">
+          {LINKS.map(l => (
+            <NavLink
+              key={l.to}
+              to={l.to}
+              className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-sm transition duration-200 ease-in-out ${isUnder(pathname, l.paths) ? "bg-surface-2 text-ink" : "text-muted hover:text-ink"}`}
+            >
+              {l.label}
+            </NavLink>
+          ))}
+        </div>
+        <div className="ml-auto flex items-center gap-1.5">
+          <ThemeToggle />
           <NavLink
-            key={l.to}
-            to={l.to}
-            className={`whitespace-nowrap border-b-2 py-3 text-sm sm:pt-[21px] sm:pb-[19px] ${isUnder(pathname, l.paths) ? "border-ink text-ink" : "border-transparent text-muted hover:text-ink"}`}
+            to="/gym"
+            className="rounded-lg bg-ink px-3.5 py-1.5 text-[13px] font-[560] whitespace-nowrap text-bg shadow-card transition duration-200 ease-in-out hover:opacity-85"
           >
-            {l.label}
+            Practise
           </NavLink>
-        ))}
-      </div>
-      <div className="ml-auto flex items-center gap-1">
-        <ThemeToggle />
-      </div>
-    </nav>
+        </div>
+      </nav>
+    </header>
   );
 
   // Home is a full-screen photo with the nav laid over it; every other page sits in the reading column.
@@ -88,6 +116,7 @@ export function AppShell() {
     </div>
   ) : (
     <div className="flex min-h-svh flex-col overflow-x-clip">
+      <Haze />
       {nav}
       <main className="mx-auto w-full max-w-[1080px] px-4 pt-7 pb-24 sm:px-7 sm:pt-10">
         <Outlet />

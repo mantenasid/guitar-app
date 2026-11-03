@@ -19,6 +19,10 @@
   --good-soft: #eaf7ee;
   --dot: #52525b;
   --shadow: 0 1px 2px rgb(24 24 27 / 0.04), 0 4px 16px rgb(24 24 27 / 0.04);
+  /* Drifting haze behind the pages: grey smoke in light, spotlight white in dark. */
+  --glow: rgb(24 24 27 / 0.06);
+  --glow-strong: rgb(24 24 27 / 0.05);
+  --grain-opacity: 0.025;
 
   /* Fretting fingers: index, middle, ring, little */
   --f1: #f59e0b;
@@ -44,6 +48,7 @@
     --accent: #fb8a4c; --accent-soft: #2b1a10;
     --good: #4cc38a; --good-soft: #10261b;
     --dot: #a1a1aa; --shadow: none;
+    --glow: rgb(255 255 255 / 0.07); --glow-strong: rgb(255 255 255 / 0.09); --grain-opacity: 0.05;
     --f4: #ea580c;
   }
 }
@@ -55,6 +60,7 @@
   --accent: #fb8a4c; --accent-soft: #2b1a10;
   --good: #4cc38a; --good-soft: #10261b;
   --dot: #a1a1aa; --shadow: none;
+  --glow: rgb(255 255 255 / 0.07); --glow-strong: rgb(255 255 255 / 0.09); --grain-opacity: 0.05;
   --f4: #ea580c;
 }
 
@@ -75,6 +81,17 @@
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
   --shadow-card: var(--shadow);
+  --color-glow: var(--glow);
+  --color-glow-strong: var(--glow-strong);
+}
+
+@theme {
+  --animate-drift-a: drift-a 34s ease-in-out infinite alternate;
+  --animate-drift-b: drift-b 46s ease-in-out infinite alternate;
+  @keyframes drift-a { from { transform: translate3d(-15vw, -5vh, 0); } to { transform: translate3d(55vw, 25vh, 0); } }
+  @keyframes drift-b { from { transform: translate3d(10vw, 20vh, 0); } to { transform: translate3d(-45vw, -10vh, 0); } }
+  /* Film grain, so the haze reads as smoke rather than a flat gradient. */
+  --image-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 @layer base {
