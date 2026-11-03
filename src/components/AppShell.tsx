@@ -52,8 +52,8 @@ export function AppShell() {
   }, [pathname]);
 
   return (
-    <div className="mx-auto max-w-[1080px] overflow-x-clip px-4 pb-24 sm:px-7">
-      <nav className="no-print mb-7 flex flex-wrap items-center gap-x-7 border-b border-line pt-3 sm:mb-10 sm:h-16 sm:flex-nowrap sm:pt-0">
+    <div className="flex min-h-svh flex-col overflow-x-clip">
+      <nav className="no-print mx-4 flex flex-wrap items-center gap-x-7 border-b border-line pt-3 sm:mx-auto sm:h-16 sm:w-[calc(100%-3.5rem)] sm:max-w-[1024px] sm:flex-nowrap sm:pt-0">
         <NavLink to="/" className="whitespace-nowrap text-[15px] font-[650] tracking-[-0.01em]">
           Guitar Practice
         </NavLink>
@@ -72,7 +72,14 @@ export function AppShell() {
           <ThemeToggle />
         </div>
       </nav>
-      <Outlet />
+      {/* Home is a full-screen scene; every other page sits in the reading column. */}
+      {pathname === "/" ? (
+        <Outlet />
+      ) : (
+        <main className="mx-auto w-full max-w-[1080px] px-4 pt-7 pb-24 sm:px-7 sm:pt-10">
+          <Outlet />
+        </main>
+      )}
       <Toasts />
     </div>
   );
