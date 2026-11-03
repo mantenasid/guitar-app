@@ -1,12 +1,12 @@
 import { Link } from "react-router";
 import { PageHeader, cardClass } from "@/components/ui";
 import { useRunningSeconds } from "@/components/AppShell";
-import { useBests, useDailyPlan, useLearned, usePracticeDays, useProgress, useStreak } from "@/progress/hooks";
+import { useDailyPlan, useLearned, usePracticeDays, useProgress, useStreak } from "@/progress/hooks";
 import { LevelPips } from "@/components/LevelPips";
 import { DAILY_XP_GOAL, type TaskReason } from "@/skills/progress";
-import { METRICS, formatValue } from "@/skills/registry";
+import { METRICS, formatValue, maxLevel } from "@/skills/registry";
 import { useSettings } from "@/progress/settings";
-import { ALL_PAIRS, CHANGE_TARGET, summarise } from "@/skills/changes";
+import { ALL_PAIRS, CHANGE_LEVELS, CHANGE_TARGET, summarise } from "@/skills/changes";
 import { countByKind, type SkillKind } from "@/skills/registry";
 
 function greeting() {
@@ -56,6 +56,7 @@ function Week() {
 }
 
 const REASON: Record<TaskReason, { label: string; cls: string }> = {
+  "warm-up": { label: "Warm up", cls: "bg-surface-2 text-ink-2" },
   review: { label: "Review", cls: "bg-surface-2 text-ink-2" },
   "level-up": { label: "Level up", cls: "bg-accent-soft text-accent" },
   new: { label: "New", cls: "bg-good-soft text-good" },
@@ -101,7 +102,7 @@ function TodayPlan() {
                 {t.target !== undefined && ` · reach ${formatValue(t.skill.kind, t.target)}`}
               </span>
             </span>
-            <LevelPips level={skills.get(t.skill.id)?.level ?? t.level} className="hidden sm:inline-flex" />
+            <LevelPips level={skills.get(t.skill.id)?.level ?? t.level} max={maxLevel(t.skill.kind)} className="hidden sm:inline-flex" />
             <span className={`rounded-full px-2 py-0.5 text-[11.5px] font-semibold ${REASON[t.reason].cls}`}>{REASON[t.reason].label}</span>
             <span className="text-faint transition group-hover:translate-x-0.5 group-hover:text-ink">→</span>
           </Link>
@@ -116,9 +117,9 @@ function TodayPlan() {
 
 export function HomePage() {
   const learned = useLearned();
-  const bests = useBests();
+  const { skills } = useProgress();
   const count = (kind: SkillKind) => [...learned].filter(id => id.startsWith(kind + ":")).length;
-  const changes = summarise(ALL_PAIRS, bests);
+  const changes = summarise(ALL_PAIRS, skills);
   const learnedLine = (kind: SkillKind) => (
     <>
       <b className="font-[550] text-ink">{count(kind)}</b> of {countByKind(kind)} learned
@@ -134,11 +135,11 @@ export function HomePage() {
         <Area
           to="/transitions"
           title="Transitions"
-          blurb={`One-minute changes. Build every pair to ${CHANGE_TARGET}.`}
+          blurb={`One-minute changes. Average ${CHANGE_LEVELS.join(" / ")} over three drills for levels 1 / 2 / 3.`}
           progress={
             changes.tried ? (
               <>
-                <b className="font-[550] text-ink">{changes.mastered}</b> of {changes.total} pairs at {CHANGE_TARGET} · avg {changes.average}
+                <b className="font-[550] text-ink">{changes.mastered}</b> of {changes.total} pairs mastered · avg speed {changes.average}
               </>
             ) : (
               `Target: ${CHANGE_TARGET} changes a minute`

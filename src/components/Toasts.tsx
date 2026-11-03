@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { AttemptScore } from "@/skills/progress";
+import { maxLevel, type SkillKind } from "@/skills/registry";
 
 interface Toast {
   id: number;
@@ -12,15 +13,13 @@ interface Toast {
 const useToasts = create<{ toasts: Toast[] }>(() => ({ toasts: [] }));
 let nextId = 1;
 
-const LEVEL_NAMES = ["", "Level 1", "Level 2", "Level 3", "Mastered"];
-
 /** Show what an attempt earned. Level-ups get a bigger toast. */
-export function celebrate(skillTitle: string, score: AttemptScore) {
+export function celebrate(kind: SkillKind, skillTitle: string, score: AttemptScore) {
   if (!score.xp) return;
   const levelled = score.levelAfter > score.levelBefore;
   const toast: Toast = {
     id: nextId++,
-    title: levelled ? `${skillTitle}: ${LEVEL_NAMES[score.levelAfter]}!` : score.newBest ? `New best on ${skillTitle}` : skillTitle,
+    title: levelled ? `${skillTitle}: ${score.levelAfter >= maxLevel(kind) ? "Mastered" : `Level ${score.levelAfter}`}!` : score.newBest ? `New best on ${skillTitle}` : skillTitle,
     detail: levelled ? "Level up" : score.newBest ? "Personal best" : "Practice logged",
     xp: score.xp,
     big: levelled,

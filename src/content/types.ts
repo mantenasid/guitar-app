@@ -25,6 +25,8 @@ export interface Shape {
   openRoots?: StringNum[];
   /** Root note name. When set, every dot and open string matching it is marked as a root. */
   root?: string;
+  /** Index finger laid flat across strings `from` (higher) to `to` (lower) at fret `f`. */
+  barre?: { f: number; from: StringNum; to: StringNum };
   dots: Dot[];
 }
 

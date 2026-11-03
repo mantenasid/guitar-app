@@ -24,8 +24,8 @@ const SCALE_NOTES: Record<string, string[][]> = {
 };
 
 describe("chords", () => {
-  it("has all 28 shapes with dots inside their window", () => {
-    expect(ALL_CHORDS).toHaveLength(28);
+  it("has all 39 shapes with dots inside their window", () => {
+    expect(ALL_CHORDS).toHaveLength(39);
     for (const c of ALL_CHORDS) expect(inWindow(c.shape), c.key).toBe(true);
   });
 

@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { usePlayback } from "@/audio/playback";
 import { setLearned } from "@/progress/db";
 import { useLearned } from "@/progress/hooks";
-import { CHANGE_TARGET, stageOf } from "@/skills/changes";
+import { CHANGE_LEVELS, CHANGE_TARGET, stageOf } from "@/skills/changes";
 
 export function PlayIcon() {
   return (
@@ -122,20 +122,20 @@ export function TickButton({ skillId, label }: { skillId: string; label?: string
   );
 }
 
-/** Thin bar towards the 80-changes target, coloured by stage, with marks at 20/40/60. */
-export function TargetBar({ value, className = "" }: { value: number; className?: string }) {
+/** Thin bar towards the 80-changes target, coloured by level, with marks at each level below it. */
+export function TargetBar({ value, level, className = "" }: { value: number; level: number; className?: string }) {
   return (
-    <div className={`stage ${stageOf(value).id} relative h-1 overflow-hidden rounded-full bg-surface-2 ${className}`}>
+    <div className={`stage ${stageOf(level, value > 0).id} relative h-1 overflow-hidden rounded-full bg-surface-2 ${className}`}>
       <span className="block h-full rounded-full bg-[var(--stage)]" style={{ width: `${Math.min(100, (value / CHANGE_TARGET) * 100)}%` }} />
-      {[20, 40, 60].map(m => (
+      {CHANGE_LEVELS.slice(0, -1).map(m => (
         <i key={m} className="absolute inset-y-0 w-0.5 bg-surface" style={{ left: `${(m / CHANGE_TARGET) * 100}%` }} />
       ))}
     </div>
   );
 }
 
-export function StageDot({ value }: { value: number }) {
-  return <span className={`stage ${stageOf(value).id} inline-block size-[7px] shrink-0 rounded-full bg-[var(--stage)]`} />;
+export function StageDot({ level, tried }: { level: number; tried: boolean }) {
+  return <span className={`stage ${stageOf(level, tried).id} inline-block size-[7px] shrink-0 rounded-full bg-[var(--stage)]`} />;
 }
 
 /** Recent scores as a small line, with a dashed line at the target. */
