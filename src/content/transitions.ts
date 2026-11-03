@@ -19,12 +19,12 @@ export const TRANSITION_SECTIONS: TransitionSection[] = [
     id: "blues", title: "Blues",
     rows: [
       {"label": "Key of E", "tag": "E7 · A7 · B7", "pairs": [["E7", "A7"], ["E7", "B7"], ["A7", "B7"]]},
-      {"label": "Key of A", "tag": "A7 · D7 · E7", "pairs": [["A7", "D7"], ["A7", "E7"], ["D7", "E7"]]},
+      {"label": "Key of A", "tag": "A7 · D7 · E7 (A7 ↔ E7 is in E)", "pairs": [["A7", "D7"], ["D7", "E7"]]},
       {"label": "Key of G", "tag": "G7 · C7 · D7", "pairs": [["G7", "C7"], ["G7", "D7"], ["C7", "D7"]]},
-      {"label": "Key of D", "tag": "D7 · G7 · A7", "pairs": [["D7", "G7"], ["D7", "A7"], ["G7", "A7"]]},
-      {"label": "C7 Extras", "tag": "Full key of C needs F7", "pairs": [["C7", "G7"], ["C7", "E7"]]},
+      {"label": "Key of D", "tag": "D7 · G7 · A7 (the rest are in G and A)", "pairs": [["G7", "A7"]]},
+      {"label": "C7 Extras", "tag": "Full key of C needs F7", "pairs": [["C7", "E7"]]},
       {"label": "Shuffle in E", "tag": "E · A · B", "pairs": [["E5/E6", "A5/A6"], ["E5/E6", "B5/B6"], ["A5/A6", "B5/B6"]]},
-      {"label": "Shuffle in A", "tag": "A · D · E", "pairs": [["A5/A6", "D5/D6"], ["A5/A6", "E5/E6"], ["D5/D6", "E5/E6"]]},
+      {"label": "Shuffle in A", "tag": "A · D · E (A ↔ E is in E)", "pairs": [["A5/A6", "D5/D6"], ["D5/D6", "E5/E6"]]},
     ],
   },
   {
@@ -58,8 +58,8 @@ export const TRANSITION_SECTIONS: TransitionSection[] = [
     id: "barre", title: "Barre chords",
     rows: [
       {"label": "Mini barre", "tag": "Into the first barres", "pairs": [["C", "Fmaj7"], ["C", "F (mini)"], ["Am", "Dm7"]]},
-      {"label": "F ↔", "root": "F", "tag": "Full barre", "pairs": [["Am", "F"], ["C", "F"], ["F", "G"]]},
-      {"label": "Bm ↔", "root": "Bm", "tag": "Full barre", "pairs": [["G", "Bm"], ["D", "Bm"]]},
+      {"label": "F ↔", "root": "F", "tag": "Full barre", "pairs": [["F", "Am"], ["F", "C"], ["F", "G"]]},
+      {"label": "Bm ↔", "root": "Bm", "tag": "Full barre", "pairs": [["Bm", "G"], ["Bm", "D"]]},
       {"label": "Moving shapes", "tag": "Slide the barre", "pairs": [["G (barre)", "C (barre)"]]},
     ],
   },
