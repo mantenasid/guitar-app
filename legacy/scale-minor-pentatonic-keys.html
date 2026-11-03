@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="assets/site.css">
+<script src="assets/site.js"></script>
+<title>Minor pentatonic in popular keys · Guitar Practice</title>
+</head>
+<body>
+<nav class="global-nav">
+  <a href="index.html" class="global-nav-brand">Guitar Practice</a>
+  <div class="global-nav-links">
+    <a href="chords.html" class="nav-tab">Chords</a>
+    <a href="transitions.html" class="nav-tab">Transitions</a>
+    <a href="strumming.html" class="nav-tab">Strumming</a>
+    <a href="scales.html" class="nav-tab active">Scales</a>
+  </div>
+</nav>
+<header class="page-head">
+  <div>
+    <span class="eyebrow"><a href="scales.html">Scales</a> / Minor Pentatonic (Popular Keys) · 15 of 16</span>
+    <h1>Minor pentatonic in popular keys</h1>
+    <div class="meta-line"><span>Formula <b>1 &middot; b3 &middot; 4 &middot; 5 &middot; b7</b></span><span>Idea <b>one shape, moved so finger 1 sits on the root</b></span><span>Pick a key below</span></div>
+  </div>
+  <button class="tick-btn" data-tick="scale:scale-minor-pentatonic-keys.html">Learned</button>
+</header>
+
+<div class="two-col">
+  <div class="col-card">
+    <div class="col-card-header">
+      <span class="col-card-title" id="key-title">A Minor Pentatonic</span>
+      <span class="col-card-subtitle" id="key-sub"></span>
+    </div>
+    <div class="key-btns" id="key-btns"></div>
+    <div class="svg-box" id="svg-1"></div>
+    <div class="card-actions"><button class="play-btn" data-label="1" data-play="scale" data-target="svg-1"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4l8.6-5.2z" fill="currentColor"/></svg> Play up &amp; down</button><span class="col-card-subtitle">Tap any dot to hear that note</span></div>
+    <div class="step-rows" id="key-steps"></div>
+  </div>
+  <div class="col-card" style="align-self:start">
+    <div class="col-card-header">
+      <span class="col-card-title">Where to Put Finger 1</span>
+      <span class="col-card-subtitle">Same shape, different fret</span>
+    </div>
+    <table class="key-table">
+      <thead><tr><th>Key</th><th>6th-str fret</th><th>Notes</th><th>Relative major</th></tr></thead>
+      <tbody id="key-table"></tbody>
+    </table>
+    <div class="tip">The box shape never changes. Find the key's root note on the 6th string, put your index finger there, and play box 1 from that fret.</div>
+    <div class="tip"><strong>E minor</strong> also works in open position (frets 0&ndash;3) &mdash; see scale #2.</div>
+  </div>
+</div>
+
+<nav class="pager"><a href="scale-minor-pentatonic-sequences.html"><span>&larr; Previous</span>Minor pentatonic sequences</a><a class="next" href="scale-minor-pentatonic-extended.html"><span>Next &rarr;</span>Minor pentatonic, extended</a></nav>
+
+<script src="assets/audio.js"></script>
+<script src="assets/fretboard.js"></script>
+<script>
+// Box 1 shape relative to the root fret: [string, fret offset, finger].
+const SHAPE = [[6,0,1],[6,3,4],[5,0,1],[5,2,3],[4,0,1],[4,2,3],[3,0,1],[3,2,3],[2,0,1],[2,3,4],[1,0,1],[1,3,4]];
+const KEYS = [
+  { key: "E", fret: 12, why: "Most common rock &amp; blues key" },
+  { key: "F#", fret: 2, why: "" },
+  { key: "G", fret: 3, why: "" },
+  { key: "A", fret: 5, why: "The classic blues box" },
+  { key: "B", fret: 7, why: "" },
+  { key: "C", fret: 8, why: "" },
+  { key: "D", fret: 10, why: "" }
+];
+const PENT = [0, 3, 5, 7, 10];
+const NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+// Flat keys (G minor, C minor) are written with flats: Bb, Eb.
+const FLAT_KEYS = ["G", "C"];
+const TO_FLAT = { "A#": "Bb", "D#": "Eb", "G#": "Ab", "C#": "Db", "F#": "Gb" };
+function spell(n, k) { return FLAT_KEYS.includes(k) ? (TO_FLAT[n] || n) : n; }
+function keyNotes(k) {
+  const r = NAMES.indexOf(k);
+  return PENT.map(i => spell(NAMES[(r + i) % 12], k));
+}
+function relMajor(k) { return spell(NAMES[(NAMES.indexOf(k) + 3) % 12], k); }
+
+document.getElementById("key-table").innerHTML = KEYS.map(k =>
+  `<tr><td>${k.key}m</td><td>Fret ${k.fret}</td><td>${keyNotes(k.key).join(" ")}</td><td>${relMajor(k.key)}</td></tr>`).join("");
+
+const STR = {6:"6th Str (Low E)",5:"5th Str (A)",4:"4th Str (D)",3:"3rd Str (G)",2:"2nd Str (B)",1:"1st Str (High e)"};
+function showKey(k) {
+  const dots = SHAPE.map(([s, o, fin]) => ({ s, f: k.fret + o, lbl: String(fin) }));
+  document.getElementById("svg-1").innerHTML = drawSVG({ startFret: k.fret, nut: false, chordRoot: k.key, dots });
+  document.getElementById("key-title").textContent = `${k.key} Minor Pentatonic`;
+  document.getElementById("key-sub").innerHTML = `Box 1 @ Fret ${k.fret}${k.why ? " &mdash; " + k.why : ""}`;
+  document.getElementById("key-steps").innerHTML = [6,5,4,3,2,1].map(s => {
+    const pts = SHAPE.filter(p => p[0] === s);
+    const badges = pts.map(([, o]) => {
+      const f = k.fret + o;
+      return `<span class="badge${Fretboard.noteName(s, f) === k.key ? " root" : ""}">${f}</span>`;
+    }).join('<span class="arrow-inline">&rarr;</span>');
+    const names = pts.map(([, o]) => spell(Fretboard.noteName(s, k.fret + o), k.key)).join(" &rarr; ");
+    return `<div class="step-row"><span class="str-label">${STR[s]}</span><div class="fret-badges">${badges}</div><span class="fingers-hint">Fingers: ${pts.map(p => p[2]).join(" &rarr; ")} &nbsp;(${names})</span></div>`;
+  }).join("");
+  document.querySelectorAll("#key-btns .btn").forEach(b => b.classList.toggle("active", b.dataset.key === k.key));
+}
+document.getElementById("key-btns").innerHTML = KEYS.map(k => `<button class="btn" data-key="${k.key}">${k.key}m</button>`).join("");
+document.getElementById("key-btns").addEventListener("click", e => {
+  const b = e.target.closest("[data-key]");
+  if (b) { Fretboard.stop(); showKey(KEYS.find(k => k.key === b.dataset.key)); }
+});
+showKey(KEYS.find(k => k.key === "A"));
+</script>
+</body>
+</html>

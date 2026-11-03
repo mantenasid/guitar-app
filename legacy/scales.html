@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="assets/site.css">
+<script src="assets/site.js"></script>
+<title>Scales · Guitar Practice</title>
+<style>
+  .card-title .n { color: var(--faint); font-weight: 400; margin-right: 6px; font-variant-numeric: tabular-nums; }
+  .formulas { display: grid; grid-template-columns: 1fr 1fr; gap: 0 40px; }
+  .formulas .list-row { justify-content: space-between; font-size: 14px; }
+  .formulas .list-row .label { min-width: 120px; }
+  .formulas .list-row .v { font-family: var(--mono); font-size: 13px; color: var(--ink-2); text-align: right; }
+  .formulas .list-row .v em { font-style: normal; color: var(--accent); }
+  @media (max-width: 720px) { .formulas { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<nav class="global-nav">
+  <a href="index.html" class="global-nav-brand">Guitar Practice</a>
+  <div class="global-nav-links">
+    <a href="chords.html" class="nav-tab">Chords</a>
+    <a href="transitions.html" class="nav-tab">Transitions</a>
+    <a href="strumming.html" class="nav-tab">Strumming</a>
+    <a href="scales.html" class="nav-tab active">Scales</a>
+  </div>
+</nav>
+
+<header class="page-head">
+  <div>
+    <h1>Scales</h1>
+    <p class="lead">16 scales in the same order as Yousician. Open any scale for string-by-string steps.</p>
+    <div class="legend">
+      <span><i class="key-dot root"></i>Root</span>
+      <span><i class="key-dot tone"></i>Scale note</span>
+      <span><i class="key-dot bounce"></i>Blue note</span>
+      <span>Numbers = fingers</span>
+    </div>
+  </div>
+</header>
+
+<div id="groups"></div>
+
+<section class="section" id="sec-formulas">
+  <div class="section-head">
+    <h2>Formulas &amp; keys</h2>
+    <p>How each scale is built, and which keys share notes.</p>
+  </div>
+  <div class="formulas">
+    <div class="list">
+      <div class="list-row"><span class="label">Minor pentatonic</span><span class="v">1 b3 4 5 b7</span></div>
+      <div class="list-row"><span class="label">Minor blues</span><span class="v">1 b3 4 <em>b5</em> 5 b7</span></div>
+      <div class="list-row"><span class="label">Major pentatonic</span><span class="v">1 2 3 5 6</span></div>
+      <div class="list-row"><span class="label">Major blues</span><span class="v">1 2 <em>b3</em> 3 5 6</span></div>
+      <div class="list-row"><span class="label">Major</span><span class="v">W W H W W W H</span></div>
+      <div class="list-row"><span class="label">Natural minor</span><span class="v">W H W W H W W</span></div>
+    </div>
+    <div class="list">
+      <div class="list-row"><span class="label">E min = G maj</span><span class="v">E G A B D</span></div>
+      <div class="list-row"><span class="label">A min = C maj</span><span class="v">A C D E G</span></div>
+      <div class="list-row"><span class="label">D min = F maj</span><span class="v">D F G A C</span></div>
+      <div class="list-row"><span class="label">F# min = A maj</span><span class="v">A B C# E F#</span></div>
+      <div class="list-row"><span class="label">B min = D maj</span><span class="v">D E F# A B</span></div>
+      <div class="list-row"><span class="label">G min = Bb maj</span><span class="v">G Bb C D F</span></div>
+    </div>
+  </div>
+</section>
+
+<script src="assets/audio.js"></script>
+<script src="assets/fretboard.js"></script>
+<script>
+// A minor pentatonic box 1 at fret 5 (reused by several cards).
+const aMinPentBox1 = [
+  {s:6, f:5, c:"root", lbl:"1"}, {s:6, f:8, c:"fifth", lbl:"4"},
+  {s:5, f:5, c:"fifth", lbl:"1"}, {s:5, f:7, c:"fifth", lbl:"3"},
+  {s:4, f:5, c:"fifth", lbl:"1"}, {s:4, f:7, c:"root", lbl:"3"},
+  {s:3, f:5, c:"fifth", lbl:"1"}, {s:3, f:7, c:"fifth", lbl:"3"},
+  {s:2, f:5, c:"fifth", lbl:"1"}, {s:2, f:8, c:"fifth", lbl:"4"},
+  {s:1, f:5, c:"root", lbl:"1"}, {s:1, f:8, c:"fifth", lbl:"4"}
+];
+
+// Groups follow the Yousician "Scales" list, top to bottom.
+const GROUPS = [
+  {
+    id: "first", label: "First Position", title: "1. Scale: First Position", lvl: 1,
+    note: "One finger per fret (frets 1&ndash;4) &mdash; learn where the natural notes live",
+    scales: [
+      {
+        name: "1. First Position (Natural Notes)", url: "scale-first-position.html", startFret: 1, nut: true, open: [1,2,3,4,5,6], chordRoot: "C",
+        dots: [
+          {s:6, f:1, lbl:"F"}, {s:6, f:3, lbl:"G"},
+          {s:5, f:2, lbl:"B"}, {s:5, f:3, lbl:"C"},
+          {s:4, f:2, lbl:"E"}, {s:4, f:3, lbl:"F"},
+          {s:3, f:2, lbl:"A"},
+          {s:2, f:1, lbl:"C"}, {s:2, f:3, lbl:"D"},
+          {s:1, f:1, lbl:"F"}, {s:1, f:3, lbl:"G"}
+        ]
+      }
+    ]
+  },
+  {
+    id: "minpent", label: "Minor Pentatonic", title: "2. Scale: Minor Pentatonic", lvl: 1,
+    note: "5 notes &mdash; the #1 scale for rock &amp; blues soloing",
+    scales: [
+      {
+        name: "2. E Minor Pentatonic", url: "scale-e-minor-pentatonic.html", startFret: 1, nut: true, open: [2,3,4,5], openRoots: [1,6],
+        dots: [
+          {s:6, f:3, c:"fifth", lbl:"3"}, {s:5, f:2, c:"fifth", lbl:"2"}, {s:4, f:2, c:"root", lbl:"2"},
+          {s:3, f:2, c:"fifth", lbl:"2"}, {s:2, f:3, c:"fifth", lbl:"3"}, {s:1, f:3, c:"fifth", lbl:"3"}
+        ]
+      },
+      { name: "3. A Minor Pentatonic", url: "scale-a-minor-pentatonic.html", startFret: 5, nut: false, dots: aMinPentBox1 }
+    ]
+  },
+  {
+    id: "minblues", label: "Minor Blues", title: "3. Scale: Minor Blues", lvl: 2,
+    note: "Minor pentatonic + the blue note (b5)",
+    scales: [
+      {
+        name: "4. E Minor Blues", url: "scale-e-minor-blues.html", startFret: 1, nut: true, open: [2,3,4,5], openRoots: [1,6],
+        dots: [
+          {s:6, f:3, c:"fifth", lbl:"3"},
+          {s:5, f:1, c:"bounce", lbl:"1"}, {s:5, f:2, c:"fifth", lbl:"2"},
+          {s:4, f:2, c:"root", lbl:"2"},
+          {s:3, f:2, c:"fifth", lbl:"2"}, {s:3, f:3, c:"bounce", lbl:"3"},
+          {s:2, f:3, c:"fifth", lbl:"3"},
+          {s:1, f:3, c:"fifth", lbl:"3"}
+        ]
+      },
+      {
+        name: "5. A Minor Blues", url: "scale-a-minor-blues.html", startFret: 5, nut: false,
+        dots: [
+          {s:6, f:5, c:"root", lbl:"1"}, {s:6, f:8, c:"fifth", lbl:"4"},
+          {s:5, f:5, c:"fifth", lbl:"1"}, {s:5, f:6, c:"bounce", lbl:"2"}, {s:5, f:7, c:"fifth", lbl:"3"},
+          {s:4, f:5, c:"fifth", lbl:"1"}, {s:4, f:7, c:"root", lbl:"3"},
+          {s:3, f:5, c:"fifth", lbl:"1"}, {s:3, f:7, c:"fifth", lbl:"3"}, {s:3, f:8, c:"bounce", lbl:"4"},
+          {s:2, f:5, c:"fifth", lbl:"1"}, {s:2, f:8, c:"fifth", lbl:"4"},
+          {s:1, f:5, c:"root", lbl:"1"}, {s:1, f:8, c:"fifth", lbl:"4"}
+        ]
+      }
+    ]
+  },
+  {
+    id: "majpent", label: "Major Pentatonic", title: "4. Scale: Major Pentatonic", lvl: 2,
+    note: "5 happy-sounding notes &mdash; plus the major blues as a bonus",
+    scales: [
+      {
+        name: "6. G Major Pentatonic", url: "scale-g-major-pentatonic.html", startFret: 1, nut: true, open: [1,2,4,5], openRoots: [3],
+        dots: [
+          {s:6, f:3, c:"root", lbl:"3"}, {s:5, f:2, c:"fifth", lbl:"2"}, {s:4, f:2, c:"fifth", lbl:"2"},
+          {s:3, f:2, c:"fifth", lbl:"2"}, {s:2, f:3, c:"fifth", lbl:"3"}, {s:1, f:3, c:"root", lbl:"3"}
+        ]
+      },
+      {
+        name: "7. C Major Pentatonic", url: "scale-c-major-pentatonic.html", startFret: 1, nut: true, open: [1,3,4],
+        dots: [
+          {s:5, f:3, c:"root", lbl:"3"}, {s:4, f:2, c:"fifth", lbl:"2"}, {s:3, f:2, c:"fifth", lbl:"2"},
+          {s:2, f:1, c:"root", lbl:"1"}, {s:2, f:3, c:"fifth", lbl:"3"}, {s:1, f:3, c:"fifth", lbl:"3"}
+        ]
+      },
+      {
+        name: "8. A & D Maj Pentatonic", url: "scale-a-major-pentatonic.html", startFret: 4, nut: false,
+        dots: [
+          {s:6, f:5, c:"root", lbl:"2"}, {s:6, f:7, c:"fifth", lbl:"4"},
+          {s:5, f:4, c:"fifth", lbl:"1"}, {s:5, f:7, c:"fifth", lbl:"4"},
+          {s:4, f:4, c:"fifth", lbl:"1"}, {s:4, f:7, c:"root", lbl:"4"},
+          {s:3, f:4, c:"fifth", lbl:"1"}, {s:3, f:6, c:"fifth", lbl:"3"},
+          {s:2, f:5, c:"fifth", lbl:"2"}, {s:2, f:7, c:"fifth", lbl:"4"},
+          {s:1, f:5, c:"root", lbl:"2"}, {s:1, f:7, c:"fifth", lbl:"4"}
+        ]
+      },
+      {
+        name: "9. A Major Blues (Bonus)", url: "scale-a-major-blues.html", startFret: 4, nut: false,
+        dots: [
+          {s:6, f:5, c:"root", lbl:"2"}, {s:6, f:7, c:"fifth", lbl:"3"}, {s:6, f:8, c:"bounce", lbl:"4"},
+          {s:5, f:4, c:"fifth", lbl:"1"}, {s:5, f:7, c:"fifth", lbl:"4"},
+          {s:4, f:4, c:"fifth", lbl:"1"}, {s:4, f:7, c:"root", lbl:"4"},
+          {s:3, f:4, c:"fifth", lbl:"1"}, {s:3, f:5, c:"bounce", lbl:"2"}, {s:3, f:6, c:"fifth", lbl:"3"},
+          {s:2, f:5, c:"fifth", lbl:"2"}, {s:2, f:7, c:"fifth", lbl:"4"},
+          {s:1, f:5, c:"root", lbl:"2"}, {s:1, f:7, c:"fifth", lbl:"3"}, {s:1, f:8, c:"bounce", lbl:"4"}
+        ]
+      }
+    ]
+  },
+  {
+    id: "major", label: "Major", title: "5. Scale: Major", lvl: 3,
+    note: "All 7 notes: Do-Re-Mi-Fa-Sol-La-Ti",
+    scales: [
+      {
+        name: "10. C Major Scale (Open)", url: "scale-c-major.html", startFret: 1, nut: true, open: [1,2,3,4],
+        dots: [
+          {s:5, f:3, c:"root", lbl:"3"},
+          {s:4, f:2, c:"fifth", lbl:"2"}, {s:4, f:3, c:"fifth", lbl:"3"},
+          {s:3, f:2, c:"fifth", lbl:"2"},
+          {s:2, f:1, c:"root", lbl:"1"}, {s:2, f:3, c:"fifth", lbl:"3"},
+          {s:1, f:1, c:"fifth", lbl:"1"}, {s:1, f:3, c:"fifth", lbl:"3"}
+        ]
+      },
+      {
+        name: "11. G Major Scale (Open)", url: "scale-g-major.html", startFret: 1, nut: true, open: [1,2,4,5], openRoots: [3],
+        dots: [
+          {s:6, f:3, c:"root", lbl:"3"},
+          {s:5, f:2, c:"fifth", lbl:"2"}, {s:5, f:3, c:"fifth", lbl:"3"},
+          {s:4, f:2, c:"fifth", lbl:"2"}, {s:4, f:4, c:"fifth", lbl:"4"},
+          {s:3, f:2, c:"fifth", lbl:"2"},
+          {s:2, f:1, c:"fifth", lbl:"1"}, {s:2, f:3, c:"fifth", lbl:"3"},
+          {s:1, f:2, c:"fifth", lbl:"2"}, {s:1, f:3, c:"root", lbl:"3"}
+        ]
+      },
+      {
+        name: "12. A & D Major (Movable)", url: "scale-a-major-movable.html", startFret: 4, nut: false,
+        dots: [
+          {s:6, f:5, c:"root", lbl:"2"}, {s:6, f:7, c:"fifth", lbl:"4"},
+          {s:5, f:4, c:"fifth", lbl:"1"}, {s:5, f:5, c:"fifth", lbl:"2"}, {s:5, f:7, c:"fifth", lbl:"4"},
+          {s:4, f:4, c:"fifth", lbl:"1"}, {s:4, f:6, c:"fifth", lbl:"3"}, {s:4, f:7, c:"root", lbl:"4"},
+          {s:3, f:4, c:"fifth", lbl:"1"}, {s:3, f:6, c:"fifth", lbl:"3"}, {s:3, f:7, c:"fifth", lbl:"4"},
+          {s:2, f:5, c:"fifth", lbl:"2"}, {s:2, f:7, c:"fifth", lbl:"4"},
+          {s:1, f:4, c:"fifth", lbl:"1"}, {s:1, f:5, c:"root", lbl:"2"}, {s:1, f:7, c:"fifth", lbl:"4"}
+        ]
+      }
+    ]
+  },
+  {
+    id: "minor", label: "Minor", title: "6. Scale: Minor", lvl: 3,
+    note: "The natural minor: all 7 notes with a sad, dark sound",
+    scales: [
+      {
+        name: "13. A Natural Minor", url: "scale-a-natural-minor.html", startFret: 4, nut: false,
+        dots: [
+          {s:6, f:5, c:"root", lbl:"2"}, {s:6, f:7, c:"fifth", lbl:"3"}, {s:6, f:8, c:"fifth", lbl:"4"},
+          {s:5, f:5, c:"fifth", lbl:"2"}, {s:5, f:7, c:"fifth", lbl:"3"}, {s:5, f:8, c:"fifth", lbl:"4"},
+          {s:4, f:5, c:"fifth", lbl:"2"}, {s:4, f:7, c:"root", lbl:"4"},
+          {s:3, f:4, c:"fifth", lbl:"1"}, {s:3, f:5, c:"fifth", lbl:"2"}, {s:3, f:7, c:"fifth", lbl:"4"},
+          {s:2, f:5, c:"fifth", lbl:"1"}, {s:2, f:6, c:"fifth", lbl:"2"}, {s:2, f:8, c:"fifth", lbl:"4"},
+          {s:1, f:5, c:"root", lbl:"1"}, {s:1, f:7, c:"fifth", lbl:"3"}, {s:1, f:8, c:"fifth", lbl:"4"}
+        ]
+      }
+    ]
+  },
+  {
+    id: "seq", label: "Min Pent: Sequences I", title: "7. Scale: Minor Pentatonic (Sequences I)", lvl: 4,
+    note: "Same box 1, played in patterns of 3s, 4s and skips",
+    scales: [ { name: "14. Minor Pentatonic Sequences I", url: "scale-minor-pentatonic-sequences.html", startFret: 5, nut: false, dots: aMinPentBox1 } ]
+  },
+  {
+    id: "keys", label: "Min Pent: Popular Keys", title: "8. Scale: Minor Pentatonic (Popular Keys)", lvl: 4,
+    note: "Slide box 1 so finger 1 sits on the key's root &mdash; E, G, A, C, D&hellip;",
+    scales: [ { name: "15. Minor Pentatonic in Popular Keys", url: "scale-minor-pentatonic-keys.html", startFret: 3, nut: false, chordRoot: "G",
+      dots: aMinPentBox1.map(d => ({ ...d, f: d.f - 2 })) } ]
+  },
+  {
+    id: "ext", label: "Min Pent: Extended", title: "9. Scale: Minor Pentatonic (Extended)", lvl: 4,
+    note: "Connect box 1 to box 2 and beyond to cover the whole neck",
+    scales: [ { name: "16. Minor Pentatonic Extended", url: "scale-minor-pentatonic-extended.html", startFret: 5, nut: false, numFrets: 6, chordRoot: "A",
+      dots: [
+        {s:6, f:5, lbl:"A"}, {s:6, f:8, lbl:"C"}, {s:6, f:10, lbl:"D"},
+        {s:5, f:5, lbl:"D"}, {s:5, f:7, lbl:"E"}, {s:5, f:10, lbl:"G"},
+        {s:4, f:5, lbl:"G"}, {s:4, f:7, lbl:"A"}, {s:4, f:10, lbl:"C"},
+        {s:3, f:5, lbl:"C"}, {s:3, f:7, lbl:"D"}, {s:3, f:9, lbl:"E"},
+        {s:2, f:5, lbl:"E"}, {s:2, f:8, lbl:"G"}, {s:2, f:10, lbl:"A"},
+        {s:1, f:5, lbl:"A"}, {s:1, f:8, lbl:"C"}, {s:1, f:10, lbl:"D"}
+      ] } ]
+  }
+];
+
+function cardHTML(c) {
+  const [num, ...rest] = c.name.split(". ");
+  return `
+    <a class="card" href="${c.url}">
+      <div class="card-head"><div class="card-title"><span class="n">${num}</span>${rest.join(". ")}</div></div>
+      ${drawSVG(c)}
+      <div class="card-foot">
+        <button type="button" class="play-btn" data-play="scale" title="Play up and down">${ICON_PLAY}</button>
+        <span class="spacer"></span>
+        ${GPH.tickHTML("scale:" + c.url)}
+      </div>
+    </a>`;
+}
+
+document.getElementById("groups").innerHTML = GROUPS.map((g, i) => `
+  <section class="section" id="sec-${g.id}">
+    <div class="section-head">
+      <h2><span class="num">${i + 1}</span>${g.title.replace(/^\d+\. Scale: /, "")}</h2>
+      <p>${g.note}</p>
+    </div>
+    <div class="grid">${g.scales.map(cardHTML).join("")}</div>
+  </section>`).join("");
+GPH.refreshTicks();
+</script>
+</body>
+</html>

@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="assets/site.css">
+<script src="assets/site.js"></script>
+<title>Transitions · Guitar Practice</title>
+<style>
+  .drill { padding: 22px; margin-bottom: 56px; }
+  .drill-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+  .drill-top .arrow { color: var(--faint); }
+  .drill-top .duration { margin-left: auto; }
+  .drill-main { display: grid; grid-template-columns: 1fr 1fr 260px; gap: 24px; align-items: start; }
+  .drill-chord .name { font-size: 17px; font-weight: 620; letter-spacing: -0.01em; display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .counter { display: flex; flex-direction: column; gap: 10px; }
+  .count-row { display: flex; align-items: baseline; justify-content: space-between; }
+  .count-row strong { font-size: 56px; font-weight: 650; letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .count-row .clock { font-size: 20px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .count-row small { font-size: 13px; color: var(--muted); margin-left: 6px; }
+  .btn.big { width: 100%; padding: 11px; font-size: 14.5px; border-radius: 10px; }
+  .btn-row { display: flex; gap: 6px; }
+  .btn-row .plus { flex: 1; }
+  .btn:disabled { opacity: 0.35; cursor: default; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 4px; }
+  .stats div { display: flex; flex-direction: column; }
+  .stats span { font-size: 12px; color: var(--muted); }
+  .stats b { font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .goal { display: flex; flex-direction: column; gap: 8px; padding-top: 12px; border-top: 1px solid var(--line); }
+  .stage-line { display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; color: var(--muted); }
+  .stage-line > span { display: inline-flex; align-items: center; gap: 6px; }
+  .result { font-size: 13.5px; color: var(--ink); min-height: 1.4em; }
+  .pacer { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); cursor: pointer; }
+  .focus { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 13.5px; color: var(--muted); }
+  .focus .overall { margin-left: auto; }
+  .row-label { min-width: 116px; font-weight: 550; font-size: 14px; }
+  .row-label small { display: block; font-weight: 400; font-size: 12px; color: var(--faint); }
+  .list-row { align-items: flex-start; }
+  .list-row .chips { flex: 1; }
+  .sec-progress { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); }
+  .sec-progress .target-bar { width: 96px; }
+  .stage-key { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); margin-top: 40px; }
+  .stage-key span { display: inline-flex; align-items: center; gap: 6px; }
+  @media (max-width: 860px) {
+    .drill-main { grid-template-columns: 1fr 1fr; }
+    .counter { grid-column: 1 / -1; order: -1; }
+  }
+  @media (max-width: 720px) {
+    .drill { padding: 16px; }
+    .drill-main { gap: 12px; }
+    .drill-top .duration { margin-left: 0; }
+    .focus .overall { margin-left: 0; width: 100%; }
+    .list-row { flex-direction: column; gap: 8px; }
+  }
+  @media print { .drill { display: none; } }
+</style>
+</head>
+<body>
+
+<nav class="global-nav">
+  <a href="index.html" class="global-nav-brand">Guitar Practice</a>
+  <div class="global-nav-links">
+    <a href="chords.html" class="nav-tab">Chords</a>
+    <a href="transitions.html" class="nav-tab active">Transitions</a>
+    <a href="strumming.html" class="nav-tab">Strumming</a>
+    <a href="scales.html" class="nav-tab">Scales</a>
+  </div>
+</nav>
+
+<header class="page-head">
+  <div>
+    <h1>Transitions</h1>
+    <p class="lead">Switch between two chords for one minute and count the clean changes. Build every pair up to 80.</p>
+  </div>
+</header>
+
+<section class="card drill" id="drill">
+  <div class="drill-top">
+    <select id="chord-a" aria-label="First chord"></select>
+    <span class="arrow">&harr;</span>
+    <select id="chord-b" aria-label="Second chord"></select>
+    <select id="duration" class="duration" aria-label="Drill length">
+      <option value="60" selected>1 minute</option>
+      <option value="30">30 s warm-up</option>
+    </select>
+  </div>
+  <div class="drill-main">
+    <div class="drill-chord" id="card-a"></div>
+    <div class="drill-chord" id="card-b"></div>
+    <div class="counter">
+      <div class="count-row"><span><strong id="count">0</strong><small>changes</small></span><span class="clock" id="clock">1:00</span></div>
+      <button class="btn primary big" id="drill-start">Start one minute</button>
+      <div class="btn-row">
+        <button class="btn plus" id="drill-plus" disabled>+1 &nbsp;<span class="muted">Space</span></button>
+        <button class="btn" id="drill-undo" disabled title="Take one back (Backspace)">&minus;1</button>
+      </div>
+      <label class="pacer"><input type="checkbox" id="pacer"> Pacer click at goal speed</label>
+      <div class="goal" id="goal"></div>
+    </div>
+  </div>
+  <div class="focus" id="focus"></div>
+</section>
+
+<div id="sections"></div>
+
+<div class="stage-key" id="stage-key"></div>
+
+<script src="assets/audio.js"></script>
+<script src="assets/fretboard.js"></script>
+<script src="assets/chords-data.js"></script>
+<script src="assets/changes.js"></script>
+<script>
+// ---------- Transition lists, built from assets/changes.js ----------
+function chipHTML(a, b, text, data) {
+  const best = bestFor(a, b, data);
+  const st = changeStage(best);
+  return `<button type="button" class="pair-chip ${st.cls}" data-a="${a}" data-b="${b}" title="${a} ↔ ${b}: ${st.name}${best ? ", best " + best : ""}"><span class="stage-dot"></span>${text}<b>${best || ""}</b></button>`;
+}
+
+function rowHTML(row, data) {
+  const chips = row.root
+    ? row.to.map(t => chipHTML(row.root, t, t, data))
+    : row.pairs.map(([a, b]) => chipHTML(a, b, `${a} ↔ ${b}`, data));
+  return `
+    <div class="list-row">
+      <div class="row-label">${row.root ? row.root + " ↔" : row.label}${row.tag ? `<small>${row.tag}</small>` : ""}</div>
+      <div class="chips">${chips.join("")}</div>
+    </div>`;
+}
+
+function renderSections() {
+  const data = changeData();
+  document.getElementById("sections").innerHTML = TRANSITION_SECTIONS.map((sec, i) => {
+    const pairs = ALL_PAIRS.filter(p => p.section === sec.id);
+    const sum = changeSummary(pairs, data);
+    return `
+      <section class="section" id="sec-${sec.id}">
+        <div class="section-head">
+          <h2><span class="num">${i + 1}</span>${sec.title}</h2>
+          <span class="sec-progress">${sum.mastered} of ${sum.total} at ${CHANGE_TARGET} ${targetBarHTML(sum.average)}</span>
+        </div>
+        <div class="list">${sec.rows.map(r => rowHTML(r, data)).join("")}</div>
+      </section>`;
+  }).join("");
+  markCurrent();
+}
+
+function renderFocus() {
+  const data = changeData();
+  const sum = changeSummary(ALL_PAIRS, data);
+  const next = suggestedPairs(3, data);
+  document.getElementById("focus").innerHTML =
+    (next.length ? `<span>Next up</span>${next.map(p => chipHTML(p.a, p.b, `${p.a} ↔ ${p.b}`, data)).join("")}` : `<span>Every pair is at ${CHANGE_TARGET}.</span>`) +
+    `<span class="overall">${sum.mastered} of ${sum.total} pairs at ${CHANGE_TARGET} · average ${sum.average}</span>`;
+}
+
+function drillChordHTML(c) {
+  return `
+    <div class="name">${c.name}<button type="button" class="play-btn" data-play="chord" title="Strum ${c.name}">${ICON_PLAY}</button></div>
+    ${drawSVG({ ...c, chordRoot: chordRootOf(c) })}`;
+}
+
+document.getElementById("stage-key").innerHTML = [...CHANGE_STAGES].reverse().map(s =>
+  `<span class="${s.cls}"><span class="stage-dot"></span>${s.name}${s.min ? ` ${s.min}+` : ""}</span>`).join("");
+
+// ---------- Drill ----------
+const selA = document.getElementById("chord-a"), selB = document.getElementById("chord-b");
+ALL_CHORDS.forEach(c => {
+  const opt = `<option value="${c.key}">${c.key}</option>`;
+  selA.insertAdjacentHTML("beforeend", opt);
+  selB.insertAdjacentHTML("beforeend", opt);
+});
+const clockEl = document.getElementById("clock"), countEl = document.getElementById("count");
+const startBtn = document.getElementById("drill-start"), plusBtn = document.getElementById("drill-plus");
+const undoBtn = document.getElementById("drill-undo"), pacerBox = document.getElementById("pacer");
+const durationSel = document.getElementById("duration");
+let drill = null;
+let lastResult = "";
+
+function markCurrent() {
+  document.querySelectorAll(".pair-chip").forEach(c => c.classList.toggle("current",
+    pairKeyOf(c.dataset.a, c.dataset.b) === pairKeyOf(selA.value, selB.value)));
+}
+
+function renderGoal() {
+  const best = bestFor(selA.value, selB.value);
+  const goal = nextGoal(best);
+  const st = changeStage(best);
+  const hist = historyFor(selA.value, selB.value);
+  document.getElementById("goal").innerHTML = `
+    <div class="stats">
+      <div><span>Best</span><b>${best || "–"}</b></div>
+      <div><span>Goal</span><b>${goal || "–"}</b></div>
+      <div><span>Target</span><b>${CHANGE_TARGET}</b></div>
+    </div>
+    ${targetBarHTML(best)}
+    <div class="stage-line"><span class="${st.cls}"><span class="stage-dot"></span> ${st.name}</span>${sparklineSVG(hist, 96, 22)}</div>
+    <div class="result">${lastResult || (best ? "" : "First try sets your baseline.")}</div>`;
+}
+
+function showPair() {
+  document.getElementById("card-a").innerHTML = drillChordHTML(CHORD_BY_KEY[selA.value]);
+  document.getElementById("card-b").innerHTML = drillChordHTML(CHORD_BY_KEY[selB.value]);
+  renderGoal();
+  markCurrent();
+  GPH.store.set("drill-pair", [selA.value, selB.value]);
+}
+function setPair(a, b) {
+  if (drill || !CHORD_BY_KEY[a] || !CHORD_BY_KEY[b]) return;
+  selA.value = a; selB.value = b;
+  lastResult = "";
+  showPair();
+}
+
+function showClock(sec) { clockEl.textContent = GPH.fmt(Math.max(0, Math.ceil(sec))); }
+showClock(+durationSel.value);
+durationSel.addEventListener("change", () => { if (!drill) showClock(+durationSel.value); });
+
+function setRunning(on) {
+  startBtn.textContent = on ? "Stop" : "Start one minute";
+  plusBtn.disabled = undoBtn.disabled = !on;
+  [selA, selB, durationSel].forEach(el => el.disabled = on);
+}
+
+function endDrill(finished) {
+  clearInterval(drill.timer);
+  clearInterval(drill.pacer);
+  const { count, secs, a, b } = drill;
+  drill = null;
+  setRunning(false);
+  showClock(+durationSel.value);
+  if (!finished) return;
+  GuitarAudio.beep({ hz: 660, dur: 0.5 });
+  if (secs !== DRILL_SECS) {
+    lastResult = `Warm-up: ${count} in ${secs}s (about ${count * 2} a minute). Warm-ups don't count.`;
+    renderGoal();
+    return;
+  }
+  const prevBest = bestFor(a, b);
+  const prevGoal = nextGoal(prevBest);
+  recordChanges(a, b, count);
+  if (count >= CHANGE_TARGET) lastResult = `${count}! This change is mastered.`;
+  else if (!prevBest) lastResult = `Baseline set: ${count}. Next goal ${nextGoal(count)}.`;
+  else if (prevGoal && count >= prevGoal) lastResult = `Goal hit with ${count}! Next goal ${nextGoal(count)}.`;
+  else if (count > prevBest) lastResult = `New best: ${count}. Keep going for ${nextGoal(count)}.`;
+  else lastResult = `${count} this time. Best is ${prevBest}: go slower and keep it clean.`;
+  renderGoal();
+  renderSections();
+  renderFocus();
+}
+
+startBtn.addEventListener("click", () => {
+  if (drill) { endDrill(false); return; }
+  const secs = +durationSel.value;
+  drill = { count: 0, secs, a: selA.value, b: selB.value, end: Date.now() + secs * 1000 };
+  countEl.textContent = "0";
+  lastResult = "";
+  renderGoal();
+  setRunning(true);
+  GuitarAudio.beep({ hz: 880, dur: 0.15 });
+  drill.timer = setInterval(() => {
+    const left = (drill.end - Date.now()) / 1000;
+    showClock(left);
+    if (left <= 0) endDrill(true);
+  }, 100);
+  if (pacerBox.checked) {
+    // One click per change at goal speed (20 a minute for a first try).
+    const rate = nextGoal(bestFor(drill.a, drill.b)) || 20;
+    drill.pacer = setInterval(() => GuitarAudio.click({ accent: false }), 60000 / rate);
+  }
+});
+function addCount(n) {
+  if (!drill) return;
+  drill.count = Math.max(0, drill.count + n);
+  countEl.textContent = drill.count;
+}
+plusBtn.addEventListener("click", () => addCount(1));
+undoBtn.addEventListener("click", () => addCount(-1));
+document.addEventListener("keydown", e => {
+  if (!drill || ["INPUT", "SELECT", "TEXTAREA"].includes(e.target.tagName)) return;
+  if (e.code === "Space") { e.preventDefault(); addCount(1); }
+  if (e.code === "Backspace") { e.preventDefault(); addCount(-1); }
+});
+
+[selA, selB].forEach(s => s.addEventListener("change", () => { lastResult = ""; showPair(); }));
+document.addEventListener("click", e => {
+  const chip = e.target.closest(".pair-chip");
+  if (!chip || drill) return;
+  setPair(chip.dataset.a, chip.dataset.b);
+  if (!chip.closest("#drill")) document.getElementById("drill").scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+// Open a pair from a link like transitions.html#pair=A|D (used by the Chords page).
+function pairFromHash() {
+  const m = decodeURIComponent(location.hash).match(/^#pair=(.+)\|(.+)$/);
+  return m && CHORD_BY_KEY[m[1]] && CHORD_BY_KEY[m[2]] ? [m[1], m[2]] : null;
+}
+window.addEventListener("hashchange", () => { const p = pairFromHash(); if (p) setPair(...p); });
+
+renderSections();
+renderFocus();
+const startPair = pairFromHash() || GPH.store.get("drill-pair", null) || (suggestedPairs(1)[0] ? [suggestedPairs(1)[0].a, suggestedPairs(1)[0].b] : ["A", "D"]);
+setPair(CHORD_BY_KEY[startPair[0]] ? startPair[0] : "A", CHORD_BY_KEY[startPair[1]] ? startPair[1] : "D");
+</script>
+</body>
+</html>

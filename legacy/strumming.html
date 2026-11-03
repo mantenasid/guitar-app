@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="assets/site.css">
+<script src="assets/site.js"></script>
+<title>Strumming · Guitar Practice</title>
+<style>
+  .player {
+    position: sticky; top: 12px; z-index: 5;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px;
+    padding: 12px 18px; margin-bottom: 48px; font-size: 13.5px; color: var(--muted);
+  }
+  .player label { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+  .player input[type=range] { width: 120px; }
+  .player .bpm { font-variant-numeric: tabular-nums; color: var(--ink); font-weight: 550; min-width: 26px; }
+  .player select { padding-top: 4px; padding-bottom: 4px; }
+  .player .now-playing { margin-left: auto; }
+  .player .now-playing b { color: var(--accent); font-weight: 550; }
+  .pattern-row { display: grid; grid-template-columns: 34px minmax(150px, 220px) 1fr auto 34px; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+  .pattern-row.count { padding: 14px 0 6px; border-bottom: none; }
+  .pattern-row.count .pname { font-size: 12px; color: var(--faint); }
+  .pname { font-size: 14.5px; font-weight: 550; }
+  .pname .n { color: var(--faint); font-weight: 400; margin-right: 6px; font-variant-numeric: tabular-nums; }
+  .ptag { font-size: 12.5px; color: var(--faint); white-space: nowrap; }
+  .beats { display: grid; grid-template-columns: repeat(var(--n), 26px); font-family: var(--mono); font-size: 14px; font-weight: 600; text-align: center; }
+  .beats > span { border-radius: 6px; padding: 2px 0; }
+  .count .beats { font-size: 11.5px; font-weight: 400; color: var(--faint); }
+  .beats > span.now { background: var(--accent-soft); color: var(--accent); }
+  .d { color: var(--ink); }
+  .u { color: var(--accent); }
+  .x { color: var(--muted); }
+  .b { color: var(--good); }
+  .m { color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+  .dot { color: var(--line-2); font-weight: 400; }
+  .legend .d, .legend .u, .legend .x, .legend .b, .legend .m { font-family: var(--mono); font-weight: 600; }
+  @media (max-width: 720px) {
+    .player { position: static; gap: 10px 16px; }
+    .player .now-playing { margin-left: 0; width: 100%; }
+    .pattern-row { grid-template-columns: 34px 1fr 34px; row-gap: 4px; }
+    .pattern-row .beats { grid-column: 2 / 4; grid-row: 2; grid-template-columns: repeat(var(--n), minmax(0, 26px)); }
+    .pattern-row .ptag { display: none; }
+    .pattern-row.count { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="global-nav">
+  <a href="index.html" class="global-nav-brand">Guitar Practice</a>
+  <div class="global-nav-links">
+    <a href="chords.html" class="nav-tab">Chords</a>
+    <a href="transitions.html" class="nav-tab">Transitions</a>
+    <a href="strumming.html" class="nav-tab active">Strumming</a>
+    <a href="scales.html" class="nav-tab">Scales</a>
+  </div>
+</nav>
+
+<header class="page-head">
+  <div>
+    <h1>Strumming</h1>
+    <p class="lead">29 patterns, easy to hard. Press play to hear any pattern loop with a count-in and metronome.</p>
+    <div class="legend">
+      <span><b class="d">D</b> down</span><span><b class="u">U</b> up</span><span><b class="x">X</b> chuck</span>
+      <span><b class="b">B</b> bass note</span><span><b class="m">P</b> palm mute</span><span><b class="dot">·</b> miss</span><span><b>&gt;</b> accent</span>
+    </div>
+  </div>
+  <div class="tabs" id="tabs">
+    <button class="active" data-filter="all">All</button>
+    <button data-filter="lvl1">Foundation</button>
+    <button data-filter="lvl2">Core</button>
+    <button data-filter="lvl3">Intermediate</button>
+    <button data-filter="lvl4">Advanced</button>
+  </div>
+</header>
+
+<div class="card player no-print" id="player">
+  <label>Tempo <input type="range" id="bpm" min="40" max="180" value="80"> <span class="bpm" id="bpm-val">80</span></label>
+  <label>Chord <select id="chord"></select></label>
+  <label><input type="checkbox" id="click" checked> Click</label>
+  <label><input type="checkbox" id="strings" checked> Guitar</label>
+  <span class="now-playing" id="now-playing">Press play on any pattern</span>
+</div>
+
+<section class="section" id="sec-lvl1">
+  <div class="section-head">
+    <h2><span class="num">1</span>Foundation</h2>
+    <p>Steady timing and a hand that never stops moving.</p>
+  </div>
+  <div class="list">
+    <div id="list-lvl1-1"></div>
+    <div id="list-lvl1-2"></div>
+  </div>
+</section>
+<section class="section" id="sec-lvl2">
+  <div class="section-head">
+    <h2><span class="num">2</span>Core grooves</h2>
+    <p>Skip downbeats, add bass notes and a little swing.</p>
+  </div>
+  <div class="list">
+    <div id="list-lvl2-1"></div>
+    <div id="list-lvl2-2"></div>
+  </div>
+</section>
+<section class="section" id="sec-lvl3">
+  <div class="section-head">
+    <h2><span class="num">3</span>Intermediate</h2>
+    <p>Palm mutes, percussive chucks and off-beat accents.</p>
+  </div>
+  <div class="list">
+    <div id="list-lvl3-1"></div>
+    <div id="list-lvl3-2"></div>
+  </div>
+</section>
+<section class="section" id="sec-lvl4">
+  <div class="section-head">
+    <h2><span class="num">4</span>Advanced</h2>
+    <p>16th-note flicks, ska upbeats and the Texas shuffle.</p>
+  </div>
+  <div class="list">
+    <div id="list-lvl4-1"></div>
+    <div id="list-lvl4-2"></div>
+  </div>
+</section>
+
+<script src="assets/audio.js"></script>
+<script src="assets/fretboard.js"></script>
+<script src="assets/chords-data.js"></script>
+<script>
+const header8 = { header: true, label: "4/4 Beat", slots: ["1", "+", "2", "+", "3", "+", "4", "+"] };
+const header6 = { header: true, label: "3/4 Beat", slots: ["1", "+", "2", "+", "3", "+"], six: true };
+const header68 = { header: true, label: "6/8 Beat", slots: ["1", "+", "2", "+", "3", "+", "4", "+", "5", "+", "6", "+"], twelve: true };
+const header16a = { header: true, label: "16th Count", slots: ["1", "+", "2", "e", "+", "3", "+", "4", "e", "+"], ten: true };
+const header16b = { header: true, label: "16th Count", slots: ["1", "+", "2", "+", "a", "3", "e", "+", "4", "+"], ten: true };
+
+// LEVEL 1: EASY
+const lvl1_1 = [
+  header8,
+  { name: "1. Quarter Downs", slots: ["D", "·", "D", "·", "D", "·", "D", "·"], tag: "Easiest" },
+  { name: "2. Stop-Time Hit", slots: ["D>", "·", "·", "·", "·", "·", "·", "·"], tag: "Count 2-3-4" },
+  { name: "3. Metronome 8ths", slots: ["D", "D", "D", "D", "D", "D", "D", "D"], tag: "All Down" },
+  { name: "4. Steady 8ths", slots: ["D", "U", "D", "U", "D", "U", "D", "U"], tag: "Down-Up" }
+];
+
+const lvl1_2 = [
+  header8,
+  { name: "5. Folk Basic #1", slots: ["D", "·", "D", "U", "D", "·", "D", "U"], tag: "Half-Bar" },
+  { name: "6. Folk Basic #2", slots: ["D", "·", "D", "·", "D", "U", "D", "U"], tag: "Build-Up" },
+  header6,
+  { name: "7. Waltz Basic", slots: ["D", "·", "D", "·", "D", "·"], six: true, tag: "3/4 Down" },
+  header68,
+  { name: "8. 6/8 All Downs", slots: ["D>", "·", "D", "·", "D", "·", "D>", "·", "D", "·", "D", "·"], twelve: true, tag: "Accent 1&4" }
+];
+
+// LEVEL 2: CORE GROOVES
+const lvl2_1 = [
+  header8,
+  { name: "9. Old Faithful", slots: ["D", "·", "D", "U", "·", "U", "D", "U"], tag: "#1 Staple" },
+  { name: "10. Pop Ballad", slots: ["D", "·", "D", "U", "·", "U", "D", "·"], tag: "Open End" },
+  { name: "11. Backbeat 2 & 4", slots: ["D", "·", "D>", "·", "D", "·", "D>", "·"], tag: "Accent" },
+  { name: "12. Blues Shuffle", slots: ["D", "·", "D", "U", "D", "·", "D", "U"], tag: "Swing +" }
+];
+
+const lvl2_2 = [
+  header8,
+  { name: "13. Country Bass", slots: ["B", "·", "D", "U", "B", "·", "D", "U"], tag: "Root Pick" },
+  header6,
+  { name: "14. Waltz Folk", slots: ["D", "·", "D", "U", "D", "U"], six: true, tag: "3/4 Brush" },
+  { name: "15. Bass Waltz", slots: ["B", "·", "D", "U", "D", "U"], six: true, tag: "3/4 Pick" },
+  header68,
+  { name: "16. 6/8 Folk Strum", slots: ["D>", "·", "U", "D", "·", "·", "D>", "·", "U", "D", "·", "·"], twelve: true, tag: "Whiteboard" }
+];
+
+// LEVEL 3: INTERMEDIATE
+const lvl3_1 = [
+  header8,
+  { name: "17. Palm Mute Chug", slots: ["P", "P", "P", "P", "P", "P", "P", "P"], tag: "Bridge Mute" },
+  { name: "18. Pop-Punk Drive", slots: ["P", "P", "D>", "P", "P", "P", "D>", "P"], tag: "Mute+Open" },
+  { name: "19. Tresillo Rock", slots: ["D>", "P", "P", "D>", "P", "P", "D>", "P"], tag: "3+3+2" },
+  { name: "20. Syncopated", slots: ["D", "·", "·", "U", "·", "U", "D", "U"], tag: "Beat 2 Miss" }
+];
+
+const lvl3_2 = [
+  header8,
+  { name: "21. Pop Chuck #1", slots: ["D", "·", "X", "U", "·", "U", "X", "U"], tag: "Slap 2 & 4" },
+  { name: "22. Pop Chuck #2", slots: ["D", "·", "X", "U", "D", "·", "X", "U"], tag: "Steady" },
+  { name: "23. Rock Riff", slots: ["D", "·", "D", "·", "D", "U", "X", "U"], tag: "End Chuck" },
+  { name: "24. Acoustic Blues", slots: ["B", "·", "D", "U", "B", "U", "D", "U"], tag: "Swung Bass" }
+];
+
+// LEVEL 4: ADVANCED
+const lvl4_1 = [
+  header16a,
+  { name: "25. Dynamic 16th #1", slots: ["D", "D", "D", "U", "D", "D", "D", "D", "U", "D"], ten: true, tag: "2e & 4e" },
+  header16b,
+  { name: "26. Dynamic 16th #2", slots: ["D", "D", "D", "·", "U", "D", "U", "D", "D", "D"], ten: true, tag: "+a & 3e" }
+];
+
+const lvl4_2 = [
+  header8,
+  { name: "27. Acoustic Slap", slots: ["B", "·", "X", "U", "·", "U", "X", "U"], tag: "Pick+Chuck" },
+  { name: "28. Ska Off-Beat", slots: ["X", "U", "X", "U", "X", "U", "X", "U"], tag: "Upbeats" },
+  { name: "29. Texas Shuffle", slots: ["D", "U", "X", "U", "D", "U", "X", "U"], tag: "SRV Rake" }
+];
+
+function styleToken(t) {
+  if (t.startsWith("D")) return `<span class="d">${t}</span>`;
+  if (t === "U") return `<span class="u">U</span>`;
+  if (t === "X") return `<span class="x">X</span>`;
+  if (t === "B") return `<span class="b">B</span>`;
+  if (t === "P") return `<span class="m">P</span>`;
+  if (t === "·") return `<span class="dot">&middot;</span>`;
+  return `<span>${t}</span>`;
+}
+
+// Every playable pattern, with the count row it sits under.
+const PATTERNS = [];
+
+function renderList(list, id) {
+  let header = null;
+  document.getElementById(id).innerHTML = list.map(item => {
+    if (item.header) {
+      header = item;
+      return `
+        <div class="pattern-row count">
+          <span></span>
+          <span class="pname">${item.label}</span>
+          <div class="beats" style="--n:${item.slots.length}">${item.slots.map(s => `<span>${s}</span>`).join("")}</div>
+          <span></span><span></span>
+        </div>`;
+    }
+    const idx = PATTERNS.push({ item, header }) - 1;
+    const [num, ...rest] = item.name.split(". ");
+    return `
+      <div class="pattern-row" data-pattern="${idx}">
+        <button type="button" class="play-btn" data-strum="${idx}" title="Play ${rest.join(". ")}">${ICON_PLAY}</button>
+        <span class="pname"><span class="n">${num}</span>${rest.join(". ")}</span>
+        <div class="beats" style="--n:${item.slots.length}">${item.slots.map(styleToken).join("")}</div>
+        <span class="ptag">${item.tag || ""}</span>
+        ${GPH.tickHTML("strum:" + num)}
+      </div>`;
+  }).join("");
+}
+
+document.getElementById("tabs").addEventListener("click", e => {
+  const btn = e.target.closest("button");
+  if (!btn) return;
+  document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("active", b === btn));
+  ["lvl1", "lvl2", "lvl3", "lvl4"].forEach(id => {
+    document.getElementById("sec-" + id).style.display = btn.dataset.filter === "all" || btn.dataset.filter === id ? "" : "none";
+  });
+});
+
+renderList(lvl1_1, "list-lvl1-1");
+renderList(lvl1_2, "list-lvl1-2");
+renderList(lvl2_1, "list-lvl2-1");
+renderList(lvl2_2, "list-lvl2-2");
+renderList(lvl3_1, "list-lvl3-1");
+renderList(lvl3_2, "list-lvl3-2");
+renderList(lvl4_1, "list-lvl4-1");
+renderList(lvl4_2, "list-lvl4-2");
+GPH.refreshTicks();
+
+// ---------- Player ----------
+const bpmInput = document.getElementById("bpm");
+const chordSelect = document.getElementById("chord");
+const clickBox = document.getElementById("click");
+const stringsBox = document.getElementById("strings");
+const nowPlaying = document.getElementById("now-playing");
+
+["G", "C", "D", "Em", "Am", "E", "A", "Dm", "E7", "A7", "B7", "E5", "A5"].forEach(k => {
+  chordSelect.insertAdjacentHTML("beforeend", `<option value="${k}">${k}</option>`);
+});
+bpmInput.addEventListener("input", () => { document.getElementById("bpm-val").textContent = bpmInput.value; });
+try {
+  const saved = GPH.store.get("strum-settings", null);
+  if (saved) {
+    bpmInput.value = saved.bpm; document.getElementById("bpm-val").textContent = saved.bpm;
+    chordSelect.value = saved.chord; clickBox.checked = saved.click; stringsBox.checked = saved.strings;
+  }
+} catch { /* ignore bad saved settings */ }
+[bpmInput, chordSelect, clickBox, stringsBox].forEach(el => el.addEventListener("change", () =>
+  GPH.store.set("strum-settings", { bpm: +bpmInput.value, chord: chordSelect.value, click: clickBox.checked, strings: stringsBox.checked })));
+
+// Where each count lands inside the bar, in beats. "+" is the half beat,
+// "e" and "a" the quarter beats. Swing pushes "+" late (2/3 of the beat).
+function slotTimes(header, swing) {
+  let beat = 0;
+  const times = header.slots.map(tok => {
+    if (/^\d+$/.test(tok)) { beat = +tok - 1; return beat; }
+    if (tok === "+") return beat + (swing ? 2 / 3 : 0.5);
+    if (tok === "e") return beat + 0.25;
+    if (tok === "a") return beat + 0.75;
+    return beat;
+  });
+  const beats = Math.max(...header.slots.filter(t => /^\d+$/.test(t)).map(Number));
+  return { times, beats };
+}
+
+function isSwing(item) { return /shuffle|swing|swung/i.test(item.name + " " + (item.tag || "")); }
+
+let playing = null; // { idx, timer, nextBar, bar }
+
+function hit(tok, when) {
+  if (!stringsBox.checked) return;
+  const notes = chordMidis(CHORD_BY_KEY[chordSelect.value]);
+  const accent = tok.endsWith(">");
+  if (tok.startsWith("D")) GuitarAudio.strum(notes, { when, dir: "down", gain: accent ? 0.85 : 0.55 });
+  else if (tok === "U") GuitarAudio.strum(notes.slice(-4), { when, dir: "up", gain: 0.38, spread: 0.01 });
+  else if (tok === "X") { GuitarAudio.chuck({ when }); GuitarAudio.strum(notes, { when, dir: "down", gain: 0.25, damped: true, spread: 0.006 }); }
+  else if (tok === "B") GuitarAudio.pluck(notes[0], { when, gain: 0.7 });
+  else if (tok === "P") GuitarAudio.strum(notes.slice(0, 3), { when, dir: "down", gain: 0.6, damped: true, spread: 0.008 });
+}
+
+function scheduleBar(p, barStart) {
+  const { item, header } = PATTERNS[p.idx];
+  const secPerBeat = 60 / +bpmInput.value;
+  const { times, beats } = slotTimes(header, isSwing(item));
+  const slotEls = document.querySelectorAll(`[data-pattern="${p.idx}"] .beats > span`);
+  const now = GuitarAudio.now();
+  if (clickBox.checked || p.countIn) {
+    for (let b = 0; b < beats; b++) GuitarAudio.click({ when: barStart + b * secPerBeat, accent: b === 0 && !p.countIn });
+  }
+  if (!p.countIn) {
+    item.slots.forEach((tok, i) => {
+      const when = barStart + times[i] * secPerBeat;
+      hit(tok, when);
+      const end = i + 1 < times.length ? barStart + times[i + 1] * secPerBeat : barStart + beats * secPerBeat;
+      p.timers.push(setTimeout(() => {
+        slotEls.forEach(el => el.classList.remove("now"));
+        slotEls[i]?.classList.add("now");
+      }, Math.max(0, (when - now) * 1000)));
+      if (i === item.slots.length - 1) p.timers.push(setTimeout(() => slotEls[i]?.classList.remove("now"), Math.max(0, (end - now) * 1000)));
+    });
+  }
+  return barStart + beats * secPerBeat;
+}
+
+function stopPattern() {
+  if (!playing) return;
+  clearInterval(playing.timer);
+  playing.timers.forEach(clearTimeout);
+  document.querySelectorAll(".now").forEach(el => el.classList.remove("now"));
+  const btn = document.querySelector(`[data-strum="${playing.idx}"]`);
+  btn.classList.remove("on"); btn.innerHTML = ICON_PLAY;
+  nowPlaying.innerHTML = "Press play on any pattern";
+  playing = null;
+}
+
+function startPattern(idx) {
+  stopPattern();
+  const p = { idx, timers: [], countIn: true };
+  playing = p;
+  const btn = document.querySelector(`[data-strum="${idx}"]`);
+  btn.classList.add("on"); btn.innerHTML = ICON_STOP;
+  const { item } = PATTERNS[idx];
+  nowPlaying.innerHTML = `<b>${item.name.replace(/^\d+\. /, "")}</b> on ${chordSelect.value}${isSwing(item) ? " · swing" : ""}`;
+  // Schedule a little ahead of time so playback stays steady.
+  let next = GuitarAudio.now() + 0.1;
+  next = scheduleBar(p, next);
+  p.countIn = false;
+  p.timer = setInterval(() => {
+    while (next < GuitarAudio.now() + 0.4) {
+      next = scheduleBar(p, next);
+    }
+  }, 100);
+}
+
+document.addEventListener("click", e => {
+  const btn = e.target.closest("[data-strum]");
+  if (!btn) return;
+  const idx = +btn.dataset.strum;
+  if (playing && playing.idx === idx) stopPattern(); else startPattern(idx);
+});
+document.addEventListener("keydown", e => {
+  if (e.code === "Space" && playing && e.target === document.body) { e.preventDefault(); stopPattern(); }
+});
+</script>
+</body>
+</html>

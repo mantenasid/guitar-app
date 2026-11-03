@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="assets/site.css">
+<script src="assets/site.js"></script>
+<title>Minor pentatonic, extended · Guitar Practice</title>
+</head>
+<body>
+<nav class="global-nav">
+  <a href="index.html" class="global-nav-brand">Guitar Practice</a>
+  <div class="global-nav-links">
+    <a href="chords.html" class="nav-tab">Chords</a>
+    <a href="transitions.html" class="nav-tab">Transitions</a>
+    <a href="strumming.html" class="nav-tab">Strumming</a>
+    <a href="scales.html" class="nav-tab active">Scales</a>
+  </div>
+</nav>
+<header class="page-head">
+  <div>
+    <span class="eyebrow"><a href="scales.html">Scales</a> / Minor Pentatonic (Extended) · 16 of 16</span>
+    <h1>Minor pentatonic, extended</h1>
+    <div class="meta-line"><span>Notes <b>A &middot; C &middot; D &middot; E &middot; G</b></span><span>Goal <b>break out of box 1 and use the whole neck</b></span></div>
+  </div>
+  <button class="tick-btn" data-tick="scale:scale-minor-pentatonic-extended.html">Learned</button>
+</header>
+
+<div class="one-col">
+  <div class="col-card">
+    <div class="col-card-header">
+      <span class="col-card-title">The Whole Neck: A Minor Pentatonic (Frets 0&ndash;17)</span>
+      <span class="col-card-subtitle">Scroll sideways on a phone</span>
+    </div>
+    <div class="svg-box fb-scroll" id="svg-neck"></div>
+    <div class="card-actions"><button class="play-btn" data-label="1" data-play="scale" data-target="svg-neck" data-step="0.2"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4l8.6-5.2z" fill="currentColor"/></svg> Play every note</button><span class="col-card-subtitle">Yellow = A (the root). Tap any dot to hear it.</span></div>
+    <div class="tip">The 5 boxes below fit together like puzzle pieces: the right-hand notes of one box are the left-hand notes of the next. Learn box 1, then add box 2, and so on.</div>
+  </div>
+  <div class="col-card">
+    <div class="col-card-header">
+      <span class="col-card-title">The 5 Connected Boxes</span>
+      <span class="col-card-subtitle">Numbers = suggested fingers</span>
+    </div>
+    <div class="box-grid" id="boxes"></div>
+  </div>
+  <div class="col-card">
+    <div class="col-card-header">
+      <span class="col-card-title">Extended Run: Box 1 &rarr; Box 2</span>
+      <span class="col-card-subtitle">Slide up on each string to change box</span>
+    </div>
+    <div class="svg-box" id="svg-ext"></div>
+    <div class="card-actions"><button class="play-btn" data-label="1" id="ext-play"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4l8.6-5.2z" fill="currentColor"/></svg> Play the run</button></div>
+    <div class="walkthrough-box">
+      <div class="walk-title">&darr; Ascending (3 notes per string):</div>
+      <div class="walk-seq">6: 5.8.10 &rarr; 5: 5.7.10 &rarr; 4: 5.7.10 &rarr; 3: 5.7.9 &rarr; 2: 5.8.10 &rarr; 1: 5.8.10</div>
+      <div class="walk-title" style="margin-top:6px;">How to play it:</div>
+      <div class="tip" style="margin-top:2px">Play the first two notes on each string with fingers 1 and 3 (or 4), then <strong>slide</strong> finger 3 up to the third note. You end up in box 2 and can keep climbing.</div>
+    </div>
+  </div>
+</div>
+
+<nav class="pager"><a href="scale-minor-pentatonic-keys.html"><span>&larr; Previous</span>Minor pentatonic in popular keys</a><a class="next" href="scale-first-position.html"><span>Back to start &rarr;</span>First position</a></nav>
+
+<script src="assets/audio.js"></script>
+<script src="assets/fretboard.js"></script>
+<script>
+const SCALE = ["A","C","D","E","G"];
+const inScale = (s, f) => SCALE.includes(Fretboard.noteName(s, f));
+
+// Whole neck.
+const neck = [];
+for (let s = 1; s <= 6; s++) for (let f = 1; f <= 17; f++) if (inScale(s, f)) neck.push({ s, f, lbl: Fretboard.noteName(s, f) });
+const openIn = [1,2,3,4,5,6].filter(s => inScale(s, 0));
+document.getElementById("svg-neck").innerHTML = drawSVG({ startFret: 1, nut: true, numFrets: 17, open: openIn, chordRoot: "A", dots: neck });
+
+// The 5 boxes, frets per string from 6th to 1st.
+const BOXES = [
+  { n: 1, frets: [[5,8],[5,7],[5,7],[5,7],[5,8],[5,8]] },
+  { n: 2, frets: [[8,10],[7,10],[7,10],[7,9],[8,10],[8,10]] },
+  { n: 3, frets: [[10,12],[10,12],[10,12],[9,12],[10,13],[10,12]] },
+  { n: 4, frets: [[12,15],[12,15],[12,14],[12,14],[13,15],[12,15]] },
+  { n: 5, frets: [[15,17],[15,17],[14,17],[14,17],[15,17],[15,17]] }
+];
+document.getElementById("boxes").innerHTML = BOXES.map(b => {
+  const min = Math.min(...b.frets.flat());
+  const dots = b.frets.flatMap((fs, i) => fs.map(f => ({ s: 6 - i, f, lbl: String(Math.min(4, f - min + 1)) })));
+  return `<div class="card" data-fb-scope style="padding:10px 12px">
+    <div class="card-header"><span class="scale-name" style="font-weight:800">Box ${b.n}</span><span class="col-card-subtitle">Frets ${min}&ndash;${Math.max(...b.frets.flat())}</span></div>
+    ${drawSVG({ startFret: min, nut: false, chordRoot: "A", dots })}
+    <div class="card-actions"><button type="button" class="play-btn" data-label="1" data-play="scale"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4l8.6-5.2z" fill="currentColor"/></svg> Play</button></div>
+  </div>`;
+}).join("");
+
+// Extended run: box 1 plus the box 2 note on each string.
+const RUN = [[6,[5,8,10]],[5,[5,7,10]],[4,[5,7,10]],[3,[5,7,9]],[2,[5,8,10]],[1,[5,8,10]]];
+const extDots = RUN.flatMap(([s, fs]) => fs.map(f => ({ s, f, lbl: Fretboard.noteName(s, f) })));
+document.getElementById("svg-ext").innerHTML = drawSVG({ startFret: 5, nut: false, numFrets: 6, chordRoot: "A", dots: extDots });
+const runUp = RUN.flatMap(([s, fs]) => fs.map(f => [s, f]));
+document.getElementById("ext-play").addEventListener("click", e => {
+  const btn = e.currentTarget;
+  if (Fretboard.isActive(btn)) { Fretboard.stop(); return; }
+  Fretboard.playSequence(document.querySelector("#svg-ext svg"), runUp.concat([...runUp].reverse().slice(1)), btn, 0.24);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="assets/site.css">
+<script src="assets/site.js"></script>
+<title>Minor pentatonic sequences · Guitar Practice</title>
+</head>
+<body>
+<nav class="global-nav">
+  <a href="index.html" class="global-nav-brand">Guitar Practice</a>
+  <div class="global-nav-links">
+    <a href="chords.html" class="nav-tab">Chords</a>
+    <a href="transitions.html" class="nav-tab">Transitions</a>
+    <a href="strumming.html" class="nav-tab">Strumming</a>
+    <a href="scales.html" class="nav-tab active">Scales</a>
+  </div>
+</nav>
+<header class="page-head">
+  <div>
+    <span class="eyebrow"><a href="scales.html">Scales</a> / Minor Pentatonic (Sequences I) · 14 of 16</span>
+    <h1>Minor pentatonic sequences</h1>
+    <div class="meta-line"><span>Shape <b>A minor pentatonic box 1 at fret 5</b></span><span>Notes <b>A &middot; C &middot; D &middot; E &middot; G</b></span><span>Goal <b>play the same box in patterns, not just up and down</b></span></div>
+  </div>
+  <button class="tick-btn" data-tick="scale:scale-minor-pentatonic-sequences.html">Learned</button>
+</header>
+
+<div class="two-col">
+  <div class="col-card" style="align-self:start">
+    <div class="col-card-header">
+      <span class="col-card-title">A Minor Pentatonic &mdash; Box 1 (Fret 5)</span>
+      <span class="col-card-subtitle">12 notes, low to high</span>
+    </div>
+    <div class="svg-box" id="svg-1"></div>
+    <div class="card-actions"><button class="play-btn" data-label="1" data-play="scale" data-target="svg-1"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4l8.6-5.2z" fill="currentColor"/></svg> Play up &amp; down</button></div>
+    <div class="tip"><strong>Note numbers:</strong> the sequences count the box's 12 notes from 1 (low A, 6th string fret 5) to 12 (high C, 1st string fret 8). Each group is written as <em>string.fret</em>.</div>
+    <div class="tip">Play every group with alternate picking (down-up). Use a metronome and only speed up once every note is clean.</div>
+  </div>
+  <div class="col-card">
+    <div class="col-card-header">
+      <span class="col-card-title">Sequences I</span>
+      <label class="speed">Speed <input type="range" id="speed" min="60" max="200" value="100"> <span id="speed-val">100</span> BPM</label>
+    </div>
+    <div class="seq-list" id="seq-list"></div>
+  </div>
+</div>
+
+<nav class="pager"><a href="scale-a-natural-minor.html"><span>&larr; Previous</span>A natural minor</a><a class="next" href="scale-minor-pentatonic-keys.html"><span>Next &rarr;</span>Minor pentatonic in popular keys</a></nav>
+
+<script src="assets/audio.js"></script>
+<script src="assets/fretboard.js"></script>
+<script>
+// Box 1 notes in pitch order as [string, fret].
+const BOX = [[6,5],[6,8],[5,5],[5,7],[4,5],[4,7],[3,5],[3,7],[2,5],[2,8],[1,5],[1,8]];
+const dots = BOX.map(([s, f]) => ({ s, f, c: Fretboard.noteName(s, f) === "A" ? "root" : "fifth", lbl: String(f - 4) }));
+document.getElementById("svg-1").innerHTML = drawSVG({ startFret: 5, nut: false, dots });
+
+function groupsOf(size, list) {
+  const out = [];
+  for (let i = 0; i + size <= list.length; i++) out.push(list.slice(i, i + size));
+  return out;
+}
+const up = BOX, down = [...BOX].reverse();
+const SEQUENCES = [
+  { name: "1. Straight Up &amp; Down", desc: "The plain box &mdash; warm up first", groups: [up, down.slice(1)] },
+  { name: "2. Groups of 3", desc: "1-2-3, 2-3-4, 3-4-5&hellip; then back down", groups: [...groupsOf(3, up), ...groupsOf(3, down)] },
+  { name: "3. Groups of 4", desc: "1-2-3-4, 2-3-4-5&hellip; then back down", groups: [...groupsOf(4, up), ...groupsOf(4, down)] },
+  { name: "4. Skipping (Intervals)", desc: "1-3, 2-4, 3-5&hellip; jump over one note", groups: [...groupsOf(3, up).map(g => [g[0], g[2]]), ...groupsOf(3, down).map(g => [g[0], g[2]])] },
+  { name: "5. Up 2, Back 1", desc: "1-2, 2-3, 3-4&hellip; pairs that climb", groups: [...groupsOf(2, up), ...groupsOf(2, down)] },
+  { name: "6. Triplet Rolls", desc: "1-2-3-2, 2-3-4-3&hellip; a classic blues lick shape", groups: [...groupsOf(3, up).map(g => [g[0], g[1], g[2], g[1]]), ...groupsOf(3, down).map(g => [g[0], g[1], g[2], g[1]])] }
+];
+
+const list = document.getElementById("seq-list");
+list.innerHTML = SEQUENCES.map((q, i) => `
+  <div class="seq-row">
+    <div class="seq-head">
+      <button type="button" class="play-btn" data-seq="${i}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4l8.6-5.2z" fill="currentColor"/></svg> Play</button>
+      <span class="seq-name">${q.name}</span>
+      <span class="seq-desc">${q.desc}</span>
+    </div>
+    <div class="seq-notes">${q.groups.map(g => `<span class="grp">${g.map(([s, f]) => s + "." + f).join(" ")}</span>`).join("")}</div>
+  </div>`).join("");
+
+const speed = document.getElementById("speed");
+speed.addEventListener("input", () => { document.getElementById("speed-val").textContent = speed.value; });
+
+list.addEventListener("click", e => {
+  const btn = e.target.closest("[data-seq]");
+  if (!btn) return;
+  if (Fretboard.isActive(btn)) { Fretboard.stop(); return; }
+  const q = SEQUENCES[+btn.dataset.seq];
+  // One note per 8th note at the chosen BPM.
+  const step = 30 / +speed.value;
+  Fretboard.playSequence(document.querySelector("#svg-1 svg"), q.groups.flat(), btn, step);
+  const grpEls = btn.closest(".seq-row").querySelectorAll(".grp");
+  let t = 0;
+  q.groups.forEach((g, gi) => {
+    const el = grpEls[gi];
+    setTimeout(() => { if (Fretboard.isActive(btn)) el.classList.add("lit"); }, t * 1000 + 50);
+    t += g.length * step;
+    setTimeout(() => el.classList.remove("lit"), t * 1000 + 50);
+  });
+});
+</script>
+</body>
+</html>

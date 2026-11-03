@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="assets/site.css">
+<script src="assets/site.js"></script>
+<title>Chords · Guitar Practice</title>
+<style>
+  .goal-strip { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; padding: 16px 20px; margin-bottom: 44px; }
+  .goal-strip .txt { flex: 1; min-width: 220px; font-size: 14px; color: var(--muted); }
+  .goal-strip .txt b { color: var(--ink); font-weight: 600; }
+  .goal-strip .target-bar { width: 160px; }
+  .goal-strip .next { font-size: 13.5px; color: var(--muted); width: 100%; }
+  .goal-strip .next a { color: var(--ink); text-decoration: none; font-weight: 500; }
+  .goal-strip .next a:hover { color: var(--accent); }
+  @media print { .goal-strip, .chord-changes { display: none; } }
+</style>
+</head>
+<body>
+
+<nav class="global-nav">
+  <a href="index.html" class="global-nav-brand">Guitar Practice</a>
+  <div class="global-nav-links">
+    <a href="chords.html" class="nav-tab active">Chords</a>
+    <a href="transitions.html" class="nav-tab">Transitions</a>
+    <a href="strumming.html" class="nav-tab">Strumming</a>
+    <a href="scales.html" class="nav-tab">Scales</a>
+  </div>
+</nav>
+
+<header class="page-head">
+  <div>
+    <h1>Chords</h1>
+    <p class="lead">28 shapes, from the first open chords to movable power chords. Tap any dot to hear it.</p>
+    <div class="legend">
+      <span><i class="key-dot root"></i>Root</span>
+      <span><i class="key-dot tone"></i>Chord note</span>
+      <span><i class="key-dot bounce"></i>Shuffle bounce</span>
+      <span>Numbers = fingers · O open · X muted</span>
+    </div>
+  </div>
+  <div class="tabs" id="tabs">
+    <button class="active" data-filter="all">All</button>
+    <button data-filter="basic">Open</button>
+    <button data-filter="blues">Blues</button>
+    <button data-filter="power">Power</button>
+  </div>
+</header>
+
+<div class="card goal-strip" id="change-goal"></div>
+
+<section class="section" id="sec-basic">
+  <div class="section-head">
+    <h2>Open chords</h2>
+    <p>The 5 major and 3 minor shapes everything else builds on.</p>
+  </div>
+  <div class="subhead">Major</div>
+  <div class="grid" id="basic-major"></div>
+  <div class="subhead">Minor</div>
+  <div class="grid" id="basic-minor"></div>
+</section>
+
+<section class="section" id="sec-blues">
+  <div class="section-head">
+    <h2>Blues chords</h2>
+    <p>Dominant 7ths for the 12-bar blues, plus four shuffle shapes.</p>
+  </div>
+  <div class="subhead">Dominant 7ths</div>
+  <div class="grid" id="blues-7"></div>
+  <div class="subhead">Shuffle: hold one finger, bounce the other</div>
+  <div class="grid" id="blues-shuffle"></div>
+</section>
+
+<section class="section" id="sec-power">
+  <div class="section-head">
+    <h2>Power chords</h2>
+    <p>Two-note chords: one-finger open shapes, then movable ones.</p>
+  </div>
+  <div class="subhead">Open, one finger</div>
+  <div class="grid" id="power-open"></div>
+  <div class="subhead">Root on the 6th string</div>
+  <div class="grid" id="power-6"></div>
+  <div class="subhead">Root on the 5th string</div>
+  <div class="grid" id="power-5"></div>
+</section>
+
+<script src="assets/audio.js"></script>
+<script src="assets/fretboard.js"></script>
+<script src="assets/chords-data.js"></script>
+<script src="assets/changes.js"></script>
+<script>
+function render(list, id) {
+  const data = changeData();
+  document.getElementById(id).innerHTML = list.map(c => chordCardHTML(c, chordChangesHTML(c.key, data))).join("");
+}
+
+document.getElementById("tabs").addEventListener("click", e => {
+  const btn = e.target.closest("button");
+  if (!btn) return;
+  document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("active", b === btn));
+  ["basic", "blues", "power"].forEach(id => {
+    document.getElementById("sec-" + id).style.display = btn.dataset.filter === "all" || btn.dataset.filter === id ? "" : "none";
+  });
+});
+
+// Overall progress towards 80 changes a minute, plus today's suggested pairs.
+function renderChangeGoal() {
+  const data = changeData();
+  const sum = changeSummary(ALL_PAIRS, data);
+  const next = suggestedPairs(3, data);
+  document.getElementById("change-goal").innerHTML = `
+    <div class="txt"><b>Change target: ${CHANGE_TARGET} a minute.</b> ${sum.mastered} of ${sum.total} pairs there &middot; average ${sum.average}</div>
+    ${targetBarHTML(sum.average)}
+    <div class="next">${next.length ? "Next up: " + next.map(p =>
+      `<a href="transitions.html#pair=${encodeURIComponent(p.a)}|${encodeURIComponent(p.b)}">${p.a} &harr; ${p.b}</a>`).join(" &middot; ") : "Every pair is mastered."}</div>`;
+}
+
+render(basicMajor, "basic-major");
+render(basicMinor, "basic-minor");
+render(blues7, "blues-7");
+render(bluesShuffle, "blues-shuffle");
+render(powerOpen, "power-open");
+render(power6, "power-6");
+render(power5, "power-5");
+renderChangeGoal();
+GPH.refreshTicks();
+</script>
+</body>
+</html>
