@@ -96,9 +96,10 @@ function ThemeToggle() {
 
 export function AppShell() {
   const { pathname } = useLocation();
-  // Leaving a screen stops whatever it was playing.
+  // Leaving a screen stops whatever it was playing and turns the mic off.
   useEffect(() => {
     stopPlayback();
+    useSettings.getState().setListen({ on: false });
     window.scrollTo(0, 0);
   }, [pathname]);
 

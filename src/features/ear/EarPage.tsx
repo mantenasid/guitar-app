@@ -4,7 +4,7 @@ import { useSearchParams } from "react-router";
 import { LevelPips } from "@/components/LevelPips";
 import { PageHeader, Tabs, cardClass } from "@/components/ui";
 import { now, strum } from "@/audio/guitar";
-import { stopPlayback } from "@/audio/playback";
+import { playScheduled, stopPlayback } from "@/audio/playback";
 import { CHORD_BY_KEY } from "@/content";
 import { EAR_STAGES, EAR_STAGE_BY_ID } from "@/content/ear";
 import { chordVoicing } from "@/music/shapes";
@@ -21,9 +21,10 @@ type Phase = "ready" | "playing" | "done";
 
 /** Strum each chord in turn, a little over a second apart. */
 function playChords(chords: number[][]) {
-  stopPlayback();
-  const t = now() + 0.05;
-  chords.forEach((midis, i) => strum(midis, { when: t + i * 1.3 }));
+  playScheduled(() => {
+    const t = now() + 0.05;
+    chords.forEach((midis, i) => strum(midis, { when: t + i * 1.3 }));
+  });
 }
 
 export default function EarPage() {

@@ -54,11 +54,12 @@ export interface BarLoopOptions {
  */
 export function startBarLoop<O extends BarLoopOptions>(count: string[], swing: boolean, getOptions: () => O, play: (i: number, when: number, o: O) => void) {
   const timers: ReturnType<typeof setTimeout>[] = [];
+  const v = guitar.voice();
   let countIn = true;
   let next = guitar.now() + 0.1;
   const { times, beats } = slotTimes(count, swing);
 
-  const scheduleBar = (barStart: number) => {
+  const scheduleBar = (barStart: number) => v.run(() => {
     const o = getOptions();
     const spb = 60 / o.bpm;
     const t = guitar.now();
@@ -75,7 +76,7 @@ export function startBarLoop<O extends BarLoopOptions>(count: string[], swing: b
     }
     countIn = false;
     return barStart + beats * spb;
-  };
+  });
 
   next = scheduleBar(next);
   const interval = setInterval(() => {
@@ -87,6 +88,7 @@ export function startBarLoop<O extends BarLoopOptions>(count: string[], swing: b
   return function stop() {
     clearInterval(interval);
     timers.forEach(clearTimeout);
+    v.stop();
   };
 }
 

@@ -25,6 +25,63 @@ export const now = () => audio().ctx.currentTime;
 export const audioContext = () => audio().ctx;
 export const synthOutput = () => audio().master;
 
+interface Group {
+  out: GainNode;
+  sources: Set<AudioScheduledSourceNode>;
+}
+
+/** The voice that sounds made right now belong to, if any. */
+let current: Group | null = null;
+
+/** Where a new source's sound goes: the current voice (which tracks it so it can be cut) or straight to master. */
+function output(src: AudioScheduledSourceNode): AudioNode {
+  const group = current;
+  if (!group) return audio().master;
+  group.sources.add(src);
+  src.addEventListener("ended", () => group.sources.delete(src));
+  return group.out;
+}
+
+export interface Voice {
+  /** Sounds made inside `fn` belong to this voice. */
+  run: <T>(fn: () => T) => T;
+  /** Silences the voice at once, including notes scheduled ahead that haven't sounded yet. */
+  stop: () => void;
+}
+
+/**
+ * Schedulers queue notes ahead on the audio clock, so clearing their timers isn't
+ * enough to stop the sound. A voice groups those notes so they can be cut together.
+ */
+export function voice(): Voice {
+  const { ctx, master } = audio();
+  const out = ctx.createGain();
+  out.connect(master);
+  const group: Group = { out, sources: new Set() };
+  let stopped = false;
+  return {
+    run(fn) {
+      const prev = current;
+      current = stopped ? null : group;
+      try {
+        return fn();
+      } finally {
+        current = prev;
+      }
+    },
+    stop() {
+      if (stopped) return;
+      stopped = true;
+      const t = ctx.currentTime;
+      // A very short fade instead of a hard cut, which would click.
+      out.gain.setTargetAtTime(0, t, 0.008);
+      group.sources.forEach(src => src.stop(t + 0.06));
+      group.sources.clear();
+      setTimeout(() => out.disconnect(), 200);
+    },
+  };
+}
+
 /** A noise burst fed through an averaging delay line sounds like a plucked string. */
 function stringBuffer(midi: number, damped: boolean): AudioBuffer {
   const key = `${midi}${damped ? "d" : ""}`;
@@ -68,7 +125,7 @@ interface NoteOpts {
 }
 
 export function pluck(midi: number, { when, gain = 0.5, damped = false }: NoteOpts = {}) {
-  const { ctx, master } = audio();
+  const { ctx } = audio();
   const src = ctx.createBufferSource();
   src.buffer = stringBuffer(midi, damped);
   const g = ctx.createGain();
@@ -79,9 +136,9 @@ export function pluck(midi: number, { when, gain = 0.5, damped = false }: NoteOp
     lp.type = "lowpass";
     lp.frequency.value = 900;
     g.connect(lp);
-    lp.connect(master);
+    lp.connect(output(src));
   } else {
-    g.connect(master);
+    g.connect(output(src));
   }
   src.start(when ?? ctx.currentTime);
 }
@@ -97,7 +154,7 @@ export function strum(midis: number[], opts: NoteOpts & { dir?: "down" | "up"; s
 
 /** Percussive muted hit: a short band-passed noise burst. */
 export function chuck({ when, gain = 0.9 }: NoteOpts = {}) {
-  const { ctx, master } = audio();
+  const { ctx } = audio();
   const len = Math.floor(ctx.sampleRate * 0.06);
   const buf = ctx.createBuffer(1, len, ctx.sampleRate);
   const d = buf.getChannelData(0);
@@ -112,12 +169,12 @@ export function chuck({ when, gain = 0.9 }: NoteOpts = {}) {
   g.gain.value = gain;
   src.connect(bp);
   bp.connect(g);
-  g.connect(master);
+  g.connect(output(src));
   src.start(when ?? ctx.currentTime);
 }
 
 export function click({ when, accent = false }: { when?: number; accent?: boolean } = {}) {
-  const { ctx, master } = audio();
+  const { ctx } = audio();
   const t = when ?? ctx.currentTime;
   const osc = ctx.createOscillator();
   const g = ctx.createGain();
@@ -125,13 +182,13 @@ export function click({ when, accent = false }: { when?: number; accent?: boolea
   g.gain.setValueAtTime(accent ? 0.35 : 0.22, t);
   g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
   osc.connect(g);
-  g.connect(master);
+  g.connect(output(osc));
   osc.start(t);
   osc.stop(t + 0.06);
 }
 
 export function beep({ when, hz = 880, dur = 0.25 }: { when?: number; hz?: number; dur?: number } = {}) {
-  const { ctx, master } = audio();
+  const { ctx } = audio();
   const t = when ?? ctx.currentTime;
   const osc = ctx.createOscillator();
   const g = ctx.createGain();
@@ -140,7 +197,7 @@ export function beep({ when, hz = 880, dur = 0.25 }: { when?: number; hz?: numbe
   g.gain.exponentialRampToValueAtTime(0.3, t + 0.01);
   g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
   osc.connect(g);
-  g.connect(master);
+  g.connect(output(osc));
   osc.start(t);
   osc.stop(t + dur + 0.02);
 }

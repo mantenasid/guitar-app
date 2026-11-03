@@ -40,17 +40,23 @@ export class ChordListener {
   private input: Input | null = null;
   private analyser: AnalyserNode | null = null;
   private timer: ReturnType<typeof setInterval> | null = null;
+  /** Bumped by every start and stop, so a start still waiting on the mic knows it was cancelled. */
+  private run = 0;
 
   constructor(private onFrame: (f: Frame) => void) {}
 
   async start(source: Source) {
     this.stop();
+    const run = this.run;
     const ctx = audioContext();
     const analyser = ctx.createAnalyser();
     analyser.fftSize = FFT_SIZE;
     analyser.smoothingTimeConstant = 0.4;
 
-    this.input = await openInput(source);
+    const input = await openInput(source);
+    // Stopped (page left, listening turned off) while the mic was opening: close it again.
+    if (run !== this.run) return input.close();
+    this.input = input;
     this.input.node.connect(analyser);
     this.analyser = analyser;
 
@@ -69,6 +75,7 @@ export class ChordListener {
   }
 
   stop() {
+    this.run++;
     if (this.timer) clearInterval(this.timer);
     this.timer = null;
     try {

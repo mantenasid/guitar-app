@@ -5,7 +5,8 @@ export function startMetronome(getBpm: () => number, onBeat: (beat: number, when
   let beat = 0;
   let next = guitar.now() + 0.1;
   const timers: ReturnType<typeof setTimeout>[] = [];
-  const schedule = () => {
+  const v = guitar.voice();
+  const schedule = () => v.run(() => {
     while (next < guitar.now() + 0.25) {
       const b = beat;
       const when = next;
@@ -15,11 +16,12 @@ export function startMetronome(getBpm: () => number, onBeat: (beat: number, when
       beat++;
     }
     if (timers.length > 64) timers.splice(0, timers.length - 16);
-  };
+  });
   schedule();
   const interval = setInterval(schedule, 50);
   return () => {
     clearInterval(interval);
     timers.forEach(clearTimeout);
+    v.stop();
   };
 }

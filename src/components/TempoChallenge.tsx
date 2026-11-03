@@ -4,17 +4,23 @@ import { startMetronome } from "@/audio/metronome";
 import { stopPlayback } from "@/audio/playback";
 import { useProgress } from "@/progress/hooks";
 import { recordResult } from "@/progress/record";
-import { METRICS, kindOf, maxLevel } from "@/skills/registry";
+import { METRICS, SKILLS, kindOf, maxLevel } from "@/skills/registry";
 import { LevelPips } from "./LevelPips";
 import { cardClass } from "./ui";
 
 /** Beats you must play before a tempo can be claimed. */
 const MIN_BEATS = 8;
 
+const titleOf = (id: string) => SKILLS.find(s => s.id === id)?.title ?? id;
+
 export function TempoChallenge({ skillId, hint }: { skillId: string; hint: string }) {
   const kind = kindOf(skillId);
   const metric = METRICS[kind];
-  const p = useProgress().skills.get(skillId);
+  const progress = useProgress();
+  const p = progress.skills.get(skillId);
+  // Anything is unlocked by reaching level 1 on each skill it requires.
+  const waitingOn = (SKILLS.find(s => s.id === skillId)?.requires ?? []).filter(id => (progress.skills.get(id)?.level ?? 0) < 1);
+  const unlocks = SKILLS.filter(s => s.requires.includes(skillId));
   const level = p?.level ?? 0;
   const max = maxLevel(kind);
   const nextTarget = level < max ? metric.levels[level]! : metric.levels[max - 1]!;
@@ -48,6 +54,11 @@ export function TempoChallenge({ skillId, hint }: { skillId: string; hint: strin
           {p?.best !== undefined ? `Best ${p.best} BPM` : "Not tried"}
         </span>
       </div>
+      {p && !p.unlocked && waitingOn.length > 0 && (
+        <p className="mb-3 rounded-lg bg-surface-2 px-3 py-2 text-[13px] text-ink-2">
+          🔒 Unlocks when you claim {metric.levels[0]} BPM or faster on {waitingOn.map(titleOf).join(" and ")}. You can still practise it now.
+        </p>
+      )}
       <div className="flex flex-wrap items-center gap-3">
         <label className="flex items-center gap-2 text-[13.5px] text-muted">
           <input type="range" min={40} max={180} step={2} value={bpm} onChange={e => setBpm(+e.target.value)} className="w-36" />
@@ -72,7 +83,14 @@ export function TempoChallenge({ skillId, hint }: { skillId: string; hint: strin
           </span>
         )}
       </div>
-      <p className="mt-3 text-[12.5px] text-faint">Levels at {metric.levels.join(" / ")} BPM. Only claim a tempo you can play without a single mistake.</p>
+      <p className="mt-3 text-[12.5px] text-faint">
+        Levels at {metric.levels.join(" / ")} BPM. Only claim a tempo you can play without a single mistake.
+        {unlocks.length > 0 && (
+          level >= 1
+            ? ` Unlocked ${unlocks.map(s => s.title).join(" and ")}.`
+            : ` Press “✓ Clean at” at ${metric.levels[0]} BPM or faster to unlock ${unlocks.map(s => s.title).join(" and ")}.`
+        )}
+      </p>
     </div>
   );
 }
