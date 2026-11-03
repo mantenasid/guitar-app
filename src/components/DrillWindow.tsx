@@ -1,4 +1,5 @@
 import { useRef, type ReactNode } from "react";
+import { DrillPath } from "./DrillPath";
 import { DrillTabs, type DrillTab } from "./DrillTabs";
 import { cardClass } from "./ui";
 
@@ -26,6 +27,8 @@ export function DrillWindow<T extends string>({
   children,
   side,
   footer,
+  path,
+  unlockHint,
 }: {
   value: T;
   options: DrillTab<T>[];
@@ -33,6 +36,9 @@ export function DrillWindow<T extends string>({
   children: ReactNode;
   side?: ReactNode;
   footer?: ReactNode;
+  /** Show one drill at a time along a path, with later drills locked until you earn them, instead of every drill as a tab. */
+  path?: boolean;
+  unlockHint?: string;
 }) {
   // Which way the body slides: from the right when you go to a later drill, from the left for an earlier one.
   const prev = useRef(value);
@@ -46,7 +52,7 @@ export function DrillWindow<T extends string>({
   return (
     <div className={`${cardClass} min-w-0 overflow-hidden`}>
       <div className="no-print border-b border-line bg-surface-2/50 px-1.5 py-1">
-        <DrillTabs value={value} options={options} onChange={onChange} />
+        {path ? <DrillPath value={value} options={options} onChange={onChange} unlockHint={unlockHint} /> : <DrillTabs value={value} options={options} onChange={onChange} />}
       </div>
       <div className="overflow-hidden">
         <div

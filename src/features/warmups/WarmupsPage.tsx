@@ -35,7 +35,9 @@ export default function WarmupsPage() {
   const [params, setParams] = useSearchParams();
   const progress = useProgress();
   const unlocked = WARMUPS.filter(w => progress.skills.get(`warmup:${w.id}`)?.unlocked);
-  const w = WARMUP_BY_ID[params.get("ex") ?? ""] ?? unlocked.at(-1) ?? WARMUPS[0]!;
+  // A locked drill can't be opened, even from a link; fall back to the furthest one you've reached.
+  const asked = WARMUP_BY_ID[params.get("ex") ?? ""];
+  const w = (asked && unlocked.includes(asked) ? asked : unlocked.at(-1)) ?? WARMUPS[0]!;
   const playId = `warmup:${w.id}`;
 
   return (
@@ -45,6 +47,8 @@ export default function WarmupsPage() {
         value={w.id}
         options={drillOptions(progress, WARMUPS, x => `warmup:${x.id}`)}
         onChange={id => setParams({ ex: id })}
+        path
+        unlockHint="Claim this warm-up at any tempo to unlock the next one."
         side={<TempoChallenge key={w.id} bare skillId={playId} hint="One note per click, every note clean and ringing. Lift each finger only when the next one lands." />}
       >
         <div className="p-5 sm:p-6">

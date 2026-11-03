@@ -8,6 +8,8 @@ export interface DrillTab<T extends string> {
   /** Still selectable, so you can look ahead; claiming is what the page holds back. */
   locked?: boolean;
   level?: number;
+  /** Drills in the same group (a section) are counted together on a path. */
+  group?: string;
 }
 
 /** Tab entries for a list of drills, each locked and levelled from progress. */

@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
-import { ALL_CHORDS, CHORD_BY_KEY, TRANSITION_SECTIONS } from "@/content";
+import { CHORD_BY_KEY, TRANSITION_SECTIONS } from "@/content";
 import { Fretboard } from "@/components/Fretboard";
-import { PageHeader, PlayButton, Section, Sparkline, StageDot, TargetBar, cardClass } from "@/components/ui";
+import { PageHeader, PlayButton, Sparkline, StageDot, TargetBar } from "@/components/ui";
+import { DrillWindow } from "@/components/DrillWindow";
+import type { DrillTab } from "@/components/DrillTabs";
 import { LevelPips } from "@/components/LevelPips";
 import { formatDuration } from "@/components/AppShell";
 import * as guitar from "@/audio/guitar";
@@ -13,7 +15,7 @@ import { useHistory, useProgress } from "@/progress/hooks";
 import { useSettings } from "@/progress/settings";
 import {
   ALL_PAIRS, CHANGE_LEVELS, DRILL_SECONDS, RECENT_DRILLS, STAGES, changeSkillId, drillFeedback, nextGoal, pairKey, pairProgress, stageOf,
-  suggestedPairs, summarise, type PairSkills,
+  summarise, type Pair, type PairSkills,
 } from "@/skills/changes";
 import { strumChord } from "@/features/chords/ChordCard";
 import { ChangeCounter } from "@/audio/listen/counter";
@@ -23,26 +25,6 @@ import { defaultSource } from "@/audio/listen/listener";
 import { recentTiming, timingId, timingScore } from "@/skills/timing";
 import { nearTwins } from "@/audio/listen/rivals";
 import { ListenPanel } from "@/components/ListenPanel";
-
-function PairChip({ a, b, text, skills, current, onPick }: { a: string; b: string; text: string; skills: PairSkills; current: boolean; onPick: (a: string, b: string) => void }) {
-  const p = pairProgress(skills, a, b);
-  const speed = p.current ?? 0;
-  const st = stageOf(p.level, p.attempts > 0);
-  return (
-    <button
-      type="button"
-      onClick={() => onPick(a, b)}
-      title={`${a} ↔ ${b}: ${st.name}${speed ? `, current speed ${speed}` : ""}`}
-      className={`inline-flex items-center gap-[7px] rounded-full border py-1 pr-[11px] pl-[9px] text-sm font-medium ${
-        current ? "border-ink ring-1 ring-ink" : p.level >= CHANGE_LEVELS.length ? "border-good bg-good-soft" : "border-line bg-surface hover:border-line-2"
-      }`}
-    >
-      <StageDot level={p.level} tried={p.attempts > 0} />
-      {text}
-      {speed > 0 && <b className="text-[12.5px] font-medium tabular-nums text-faint">{speed}</b>}
-    </button>
-  );
-}
 
 interface Run {
   a: string;
@@ -64,7 +46,7 @@ function playLatency(): number {
   return (ctx.outputLatency || 0) + ctx.baseLatency;
 }
 
-function Drill({ a, b, onPick, skills }: { a: string; b: string; onPick: (a: string, b: string) => void; skills: PairSkills }) {
+function Drill({ a, b, skills }: { a: string; b: string; skills: PairSkills }) {
   const [secs, setSecs] = useState(DRILL_SECONDS);
   const [phase, setPhase] = useState<Phase>("idle");
   const [primerLeft, setPrimerLeft] = useState(PRIMER_SECONDS);
@@ -212,7 +194,6 @@ function Drill({ a, b, onPick, skills }: { a: string; b: string; onPick: (a: str
     }, PRIMER_SECONDS * 1000));
   };
 
-  const chordOptions = ALL_CHORDS.map(c => <option key={c.key} value={c.key}>{c.key}</option>);
   const busy = phase !== "idle";
   const chordTile = (key: string) => {
     const c = CHORD_BY_KEY[key]!;
@@ -233,17 +214,7 @@ function Drill({ a, b, onPick, skills }: { a: string; b: string; onPick: (a: str
   };
 
   return (
-    <section className={`${cardClass} no-print mb-14 p-4 sm:p-[22px]`}>
-      <div className="mb-[18px] flex flex-wrap items-center gap-2">
-        <select aria-label="First chord" value={a} disabled={busy} onChange={e => onPick(e.target.value, b)}>{chordOptions}</select>
-        <span className="text-faint">↔</span>
-        <select aria-label="Second chord" value={b} disabled={busy} onChange={e => onPick(a, e.target.value)}>{chordOptions}</select>
-        <select aria-label="Drill length" className="sm:ml-auto" value={secs} disabled={busy} onChange={e => { setSecs(+e.target.value); setLeft(+e.target.value); }}>
-          <option value={60}>1 minute</option>
-          <option value={30}>30 s warm-up</option>
-        </select>
-      </div>
-
+    <div className="no-print p-4 sm:p-[22px]">
       <div className="grid grid-cols-2 items-start gap-3 sm:gap-6 lg:grid-cols-[1fr_1fr_260px]">
         <div className="col-span-2 flex flex-col gap-2.5 lg:order-last lg:col-span-1">
           {phase === "primer" ? (
@@ -278,9 +249,15 @@ function Drill({ a, b, onPick, skills }: { a: string; b: string; onPick: (a: str
               ? `${a} and ${b} differ by one note, so every strum after "Go" counts as a change. Strum once per change.`
               : "Each change counts once the new chord rings clearly. Re-strumming the same chord doesn't count."}
           />
-          <label className="flex cursor-pointer items-center gap-2 text-[13px] text-muted">
-            <input type="checkbox" checked={pacer} onChange={e => setPacer(e.target.checked)} /> Pacer click at goal speed
-          </label>
+          <div className="flex flex-wrap items-center justify-between gap-2 text-[13px] text-muted">
+            <label className="flex cursor-pointer items-center gap-2">
+              <input type="checkbox" checked={pacer} onChange={e => setPacer(e.target.checked)} /> Pacer click at goal speed
+            </label>
+            <select aria-label="Drill length" value={secs} disabled={busy} onChange={e => { setSecs(+e.target.value); setLeft(+e.target.value); }}>
+              <option value={60}>1 minute</option>
+              <option value={30}>30 s warm-up</option>
+            </select>
+          </div>
           <div className="flex flex-col gap-2 border-t border-line pt-3">
             <div className="grid grid-cols-2 gap-x-1.5 gap-y-2.5">
               {[
@@ -312,27 +289,20 @@ function Drill({ a, b, onPick, skills }: { a: string; b: string; onPick: (a: str
         {chordTile(chordA.key)}
         {chordTile(chordB.key)}
       </div>
-
-      <NextUp skills={skills} a={a} b={b} onPick={onPick} />
-    </section>
+    </div>
   );
 }
 
-function NextUp({ skills, a, b, onPick }: { skills: PairSkills; a: string; b: string; onPick: (a: string, b: string) => void }) {
-  const sum = summarise(ALL_PAIRS, skills);
-  const next = suggestedPairs(skills, 3);
-  const current = pairKey(a, b);
-  return (
-    <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-line pt-4 text-[13.5px] text-muted">
-      <span>{next.length ? "Next up" : "Every pair is mastered."}</span>
-      {next.map(p => (
-        <PairChip key={p.key} a={p.a} b={p.b} text={`${p.a} ↔ ${p.b}`} skills={skills} current={p.key === current} onPick={onPick} />
-      ))}
-      <span className="w-full sm:ml-auto sm:w-auto">
-        {sum.mastered} of {sum.total} pairs mastered · average speed {sum.average}
-      </span>
-    </div>
-  );
+const SECTION_TITLE = new Map(TRANSITION_SECTIONS.map(sec => [sec.id, sec.title]));
+
+/** Every pair in learning order. A pair opens once the one before it reaches level 1; any pair you've already drilled stays open. */
+function pathOptions(skills: PairSkills): DrillTab<string>[] {
+  return ALL_PAIRS.map((p, i) => {
+    const prev = ALL_PAIRS[i - 1];
+    const own = pairProgress(skills, p.a, p.b);
+    const locked = !!prev && own.attempts === 0 && pairProgress(skills, prev.a, prev.b).level < 1;
+    return { value: p.key, label: `${p.a} ↔ ${p.b}`, locked, level: own.level, group: SECTION_TITLE.get(p.section) };
+  });
 }
 
 export default function TransitionsPage() {
@@ -341,58 +311,45 @@ export default function TransitionsPage() {
   const saved = useSettings(s => s.drillPair);
   const setSaved = useSettings(s => s.setDrillPair);
 
+  const options = pathOptions(skills);
+  const open = (key: string | undefined) => (key ? options.find(o => o.value === key && !o.locked) : undefined);
+  const byKey = (key: string) => ALL_PAIRS.find(p => p.key === key);
+  // The pair in the link, else the last one you drilled, else the furthest one open. A locked pair can't be opened.
   const fromUrl = params.get("pair")?.split("|");
-  const [a, b] = fromUrl && fromUrl.length === 2 && CHORD_BY_KEY[fromUrl[0]!] && CHORD_BY_KEY[fromUrl[1]!] ? (fromUrl as [string, string]) : saved;
+  const asked = fromUrl?.length === 2 ? pairKey(fromUrl[0]!, fromUrl[1]!) : undefined;
+  const chosen = open(asked) ?? open(pairKey(saved[0], saved[1])) ?? options.filter(o => !o.locked).at(-1)!;
+  const pair: Pair = byKey(chosen.value)!;
 
-  const pick = (x: string, y: string) => {
-    setSaved([x, y]);
-    setParams({ pair: `${x}|${y}` }, { replace: true });
-    document.getElementById("drill-top")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const pick = (key: string) => {
+    const p = byKey(key);
+    if (!p) return;
+    setSaved([p.a, p.b]);
+    setParams({ pair: `${p.a}|${p.b}` }, { replace: true });
   };
-  const current = pairKey(a, b);
+  const sum = summarise(ALL_PAIRS, skills);
 
   return (
     <>
-      <div id="drill-top" />
       <PageHeader title="Transitions" lead={`Switch between two chords for one minute and count the clean changes. Your current speed is the average of your last ${RECENT_DRILLS} drills; hold an average of ${CHANGE_LEVELS.join(" / ")} for levels 1 / 2 / 3.`} />
-      <Drill a={a} b={b} onPick={pick} skills={skills} />
+      <DrillWindow
+        value={pair.key}
+        options={options}
+        onChange={pick}
+        path
+        unlockHint={`Average ${CHANGE_LEVELS[0]} changes a minute here to unlock the next pair.`}
+        footer={
+          <>
+            <span>
+              {sum.mastered} of {sum.total} pairs mastered
+            </span>
+            <span>Average speed {sum.average}</span>
+          </>
+        }
+      >
+        <Drill a={pair.a} b={pair.b} skills={skills} />
+      </DrillWindow>
 
-      {TRANSITION_SECTIONS.map((sec, i) => {
-        const pairs = ALL_PAIRS.filter(p => p.section === sec.id);
-        const sum = summarise(pairs, skills);
-        const lowest = Math.min(...pairs.map(p => pairProgress(skills, p.a, p.b).level));
-        return (
-          <Section
-            key={sec.id}
-            num={i + 1}
-            title={sec.title}
-            aside={
-              <span className="flex items-center gap-2.5 text-[13px] text-muted">
-                {sum.mastered} of {sum.total} mastered
-                <TargetBar value={sum.average} level={lowest} className="w-24" />
-              </span>
-            }
-          >
-            <div className="border-t border-line">
-              {sec.rows.map(row => (
-                <div key={row.label + row.pairs.join()} className="flex flex-col gap-2 border-b border-line px-0.5 py-[11px] sm:flex-row sm:gap-3.5">
-                  <div className="min-w-[116px] text-sm font-[550]">
-                    {row.label}
-                    {row.tag && <small className="block text-xs font-normal text-faint">{row.tag}</small>}
-                  </div>
-                  <div className="flex flex-1 flex-wrap gap-1.5">
-                    {row.pairs.map(([x, y]) => (
-                      <PairChip key={x + y} a={x} b={y} text={row.root ? y : `${x} ↔ ${y}`} skills={skills} current={pairKey(x, y) === current} onPick={pick} />
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Section>
-        );
-      })}
-
-      <div className="mt-10 flex flex-wrap gap-x-4 gap-y-1.5 text-[13px] text-muted">
+      <div className="mt-6 flex flex-wrap gap-x-4 gap-y-1.5 text-[13px] text-muted">
         {[...STAGES].reverse().map(s => (
           <span key={s.id} className="inline-flex items-center gap-1.5">
             <StageDot level={STAGES.indexOf(s) - 1} tried={s.id !== "s0"} /> {s.name}

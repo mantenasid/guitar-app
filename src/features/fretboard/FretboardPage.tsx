@@ -31,7 +31,9 @@ export default function FretboardPage() {
   const [params, setParams] = useSearchParams();
   const progress = useProgress();
   const unlocked = NOTE_SETS.filter(s => progress.skills.get(`note:${s.id}`)?.unlocked);
-  const set = NOTE_SET_BY_ID[params.get("set") ?? ""] ?? unlocked[unlocked.length - 1] ?? NOTE_SETS[0]!;
+  // A locked set can't be opened, even from a link; fall back to the furthest one you've reached.
+  const asked = NOTE_SET_BY_ID[params.get("set") ?? ""];
+  const set = (asked && unlocked.includes(asked) ? asked : unlocked.at(-1)) ?? NOTE_SETS[0]!;
   const skill = progress.skills.get(`note:${set.id}`);
 
   const [phase, setPhase] = useState<Phase>("ready");
@@ -108,6 +110,8 @@ export default function FretboardPage() {
           setSpot(null);
           setParams({ set: id });
         }}
+        path
+        unlockHint={`Name ${metric.levels[0]} notes in a minute here to unlock the next set.`}
         footer={
           <>
             <span className="inline-flex items-center gap-2">
