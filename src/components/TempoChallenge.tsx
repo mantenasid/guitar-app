@@ -13,7 +13,8 @@ const MIN_BEATS = 8;
 
 const titleOf = (id: string) => SKILLS.find(s => s.id === id)?.title ?? id;
 
-export function TempoChallenge({ skillId, hint }: { skillId: string; hint: string }) {
+/** `bare` drops the card, for when it sits inside a drill window pane. */
+export function TempoChallenge({ skillId, hint, bare = false }: { skillId: string; hint: string; bare?: boolean }) {
   const kind = kindOf(skillId);
   const metric = METRICS[kind];
   const progress = useProgress();
@@ -43,7 +44,7 @@ export function TempoChallenge({ skillId, hint }: { skillId: string; hint: strin
   };
 
   return (
-    <div className={`${cardClass} no-print p-4 sm:p-5`}>
+    <div className={bare ? "no-print p-5 sm:p-6" : `${cardClass} no-print p-4 sm:p-5`}>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div>
           <div className="text-base font-[620]">Tempo challenge</div>

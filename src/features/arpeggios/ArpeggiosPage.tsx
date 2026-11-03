@@ -2,7 +2,9 @@
 import { useSearchParams } from "react-router";
 import { Fretboard } from "@/components/Fretboard";
 import { TempoChallenge } from "@/components/TempoChallenge";
-import { PageHeader, PlayButton, Tabs, cardClass } from "@/components/ui";
+import { DrillWindow } from "@/components/DrillWindow";
+import { drillOptions } from "@/components/DrillTabs";
+import { PageHeader, PlayButton } from "@/components/ui";
 import { playSequence, toggle } from "@/audio/playback";
 import { ARPEGGIOS, ARPEGGIO_BY_ID, type ArpStep, type Arpeggio } from "@/content/arpeggios";
 import type { Dot, Shape } from "@/content/types";
@@ -41,15 +43,13 @@ export default function ArpeggiosPage() {
   return (
     <>
       <PageHeader title="Arpeggios" lead="The notes of a chord, one at a time. Learn each shape with its degrees, then slide it up or down the neck for any key. Up to the top root and back down, then claim the tempo." />
-      <div className="mb-4">
-        <Tabs
-          value={a.id}
-          options={ARPEGGIOS.map(x => ({ value: x.id, label: progress.skills.get(`arp:${x.id}`)?.unlocked ? x.title : `🔒 ${x.title}` }))}
-          onChange={id => setParams({ arp: id })}
-        />
-      </div>
-
-      <div className={`${cardClass} min-w-0 p-5 sm:p-6`}>
+      <DrillWindow
+        value={a.id}
+        options={drillOptions(progress, ARPEGGIOS, x => `arp:${x.id}`)}
+        onChange={id => setParams({ arp: id })}
+        side={<TempoChallenge key={a.id} bare skillId={playId} hint="One note per click, up to the top root and back down. Let each note stop as the next one sounds." />}
+      >
+        <div className="p-5 sm:p-6">
         <div className="mb-3.5">
           <div className="text-base font-[620] tracking-[-0.01em]">
             {a.title} <span className="font-normal text-muted">· shown as {a.chord}</span>
@@ -84,11 +84,8 @@ export default function ArpeggiosPage() {
             ))}
           </div>
         </div>
-      </div>
-
-      <div className="mt-5">
-        <TempoChallenge key={a.id} skillId={playId} hint="One note per click, up to the top root and back down. Let each note stop as the next one sounds." />
-      </div>
+        </div>
+      </DrillWindow>
     </>
   );
 }

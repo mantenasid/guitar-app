@@ -2,7 +2,9 @@
 import { useSearchParams } from "react-router";
 import { Fretboard } from "@/components/Fretboard";
 import { TempoChallenge } from "@/components/TempoChallenge";
-import { PageHeader, PlayButton, Tabs, cardClass } from "@/components/ui";
+import { DrillWindow } from "@/components/DrillWindow";
+import { drillOptions } from "@/components/DrillTabs";
+import { PageHeader, PlayButton } from "@/components/ui";
 import { playSequence, toggle } from "@/audio/playback";
 import { WARMUPS, WARMUP_BY_ID, type Warmup, type WarmupStep } from "@/content/warmups";
 import type { Dot, Shape } from "@/content/types";
@@ -39,15 +41,13 @@ export default function WarmupsPage() {
   return (
     <>
       <PageHeader title="Warm-ups" lead="A few minutes before you practise. Each finger gets its own fret, so the weak ones catch up. Go slow and clean, then claim the tempo." />
-      <div className="mb-4">
-        <Tabs
-          value={w.id}
-          options={WARMUPS.map(x => ({ value: x.id, label: progress.skills.get(`warmup:${x.id}`)?.unlocked ? x.title : `🔒 ${x.title}` }))}
-          onChange={id => setParams({ ex: id })}
-        />
-      </div>
-
-      <div className={`${cardClass} min-w-0 p-5 sm:p-6`}>
+      <DrillWindow
+        value={w.id}
+        options={drillOptions(progress, WARMUPS, x => `warmup:${x.id}`)}
+        onChange={id => setParams({ ex: id })}
+        side={<TempoChallenge key={w.id} bare skillId={playId} hint="One note per click, every note clean and ringing. Lift each finger only when the next one lands." />}
+      >
+        <div className="p-5 sm:p-6">
         <div className="mb-3.5">
           <div className="text-base font-[620] tracking-[-0.01em]">{w.title}</div>
           <div className="text-[13px] text-muted">{w.tag}</div>
@@ -79,11 +79,8 @@ export default function WarmupsPage() {
             ))}
           </div>
         </div>
-      </div>
-
-      <div className="mt-5">
-        <TempoChallenge key={w.id} skillId={playId} hint="One note per click, every note clean and ringing. Lift each finger only when the next one lands." />
-      </div>
+        </div>
+      </DrillWindow>
     </>
   );
 }

@@ -113,12 +113,6 @@ export function AppShell() {
         </div>
         <div className="ml-auto flex items-center gap-1.5">
           <ThemeToggle />
-          <NavLink
-            to="/gym"
-            className="rounded-lg bg-ink px-3.5 py-1.5 text-[13px] font-[560] whitespace-nowrap text-bg shadow-card transition duration-200 ease-in-out hover:opacity-85"
-          >
-            Practise
-          </NavLink>
         </div>
       </nav>
     </header>
