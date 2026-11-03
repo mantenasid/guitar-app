@@ -160,7 +160,7 @@ export function AppShell() {
         // On home the bar floats over the photo; elsewhere it sticks to the top as the page scrolls under it.
         // Over the bright day photo the glass is smoked and the text cream, so the sky can't wash the links out.
         home
-          ? "self-start [grid-area:1/1] [--bg:#1e2a22] [--glass-rim:rgb(255_255_255/0.22)] [--glass:rgb(28_34_30/0.42)] [--ink:#f6f1e4] [--muted:rgb(246_241_228/0.78)] [--surface-2:rgb(255_255_255/0.16)]"
+          ? "self-start [grid-area:1/1] [--bg:#1e2a22] [--glass-rim:rgb(255_255_255/0.22)] [--glass:rgb(28_34_30/0.62)] [&_nav]:backdrop-blur-3xl [--ink:#f6f1e4] [--muted:rgb(246_241_228/0.78)] [--surface-2:rgb(255_255_255/0.16)]"
           : `sticky top-0 transition-opacity duration-200 ease-out focus-within:pointer-events-auto focus-within:opacity-100! ${opacity === 0 ? "pointer-events-none" : ""}`
       }`}
     >

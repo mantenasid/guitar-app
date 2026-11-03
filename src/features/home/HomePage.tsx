@@ -132,12 +132,15 @@ export function HomePage() {
           />
         ))}
       </svg>
-      {/* At night, darken the edges and the top so the nav reads over the photo. By day the glass nav reads on its own. */}
-      {dark && (
+      {/* At night, darken the edges and the top so the nav reads over the photo. By day, just a soft shade at the top so the bright
+       * window frames don't fight the logo. */}
+      {dark ? (
         <>
           <div className="pointer-events-none bg-[radial-gradient(ellipse_at_center,transparent_60%,rgb(0_0_0/0.7))] [grid-area:1/1]" />
           <div className="pointer-events-none bg-gradient-to-b from-black/70 to-transparent to-[18%] [grid-area:1/1]" />
         </>
+      ) : (
+        <div className="pointer-events-none bg-gradient-to-b from-black/35 to-transparent to-[22%] [grid-area:1/1]" />
       )}
       <div className="pointer-events-none flex items-end justify-center pb-[6vh] [grid-area:1/1]">
         <Link
