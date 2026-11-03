@@ -21,6 +21,10 @@ function audio(): { ctx: AudioContext; master: GainNode } {
 
 export const now = () => audio().ctx.currentTime;
 
+/** The shared audio context and the synth's output, for analysis. */
+export const audioContext = () => audio().ctx;
+export const synthOutput = () => audio().master;
+
 /** A noise burst fed through an averaging delay line sounds like a plucked string. */
 function stringBuffer(midi: number, damped: boolean): AudioBuffer {
   const key = `${midi}${damped ? "d" : ""}`;

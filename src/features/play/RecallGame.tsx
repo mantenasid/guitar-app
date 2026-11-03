@@ -11,6 +11,12 @@ import * as guitar from "@/audio/guitar";
 import { useProgress } from "@/progress/hooks";
 import { recordResult } from "@/progress/record";
 import { METRICS, SKILLS, formatValue, levelFor } from "@/skills/registry";
+import { rivalsOf } from "@/audio/listen/rivals";
+import { useChordListener } from "@/audio/listen/useChordListener";
+import { ListenPanel } from "@/components/ListenPanel";
+
+/** Frames in a row the target must be heard before it counts (~120 ms). */
+const HEARD_FRAMES = 3;
 
 const ROUNDS = 5;
 
@@ -47,7 +53,9 @@ export default function RecallGame() {
   const [rounds, setRounds] = useState<Round[]>([]);
   const [phase, setPhase] = useState<Phase>("ready");
   const [elapsed, setElapsed] = useState(0);
+  const [heardNote, setHeardNote] = useState("");
   const startAt = useRef(0);
+  const streak = useRef(0);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const index = rounds.length;
@@ -81,14 +89,39 @@ export default function RecallGame() {
     setPhase("check");
   }, []);
 
-  const judge = useCallback(async (clean: boolean) => {
-    const seconds = Math.round(elapsed * 100) / 100;
+  const judge = useCallback(async (clean: boolean, measured?: number) => {
+    const seconds = Math.round((measured ?? elapsed) * 100) / 100;
     const next = [...rounds, { key, seconds, clean }];
     setRounds(next);
     if (clean) await recordResult(`chord:${key}`, seconds);
     if (next.length >= ROUNDS) setPhase("done");
     else setPhase("ready");
   }, [elapsed, rounds, key]);
+
+  // With the mic on, hearing the target chord ring clearly stops the clock and
+  // counts as a clean recall, then the next round starts by itself.
+  const phaseRef = useRef(phase);
+  phaseRef.current = phase;
+  const beginRef = useRef(begin);
+  beginRef.current = begin;
+  const rivals = useMemo(() => rivalsOf(key), [key]);
+  const listen = useChordListener(rivals, label => {
+    if (phaseRef.current !== "go") return;
+    streak.current = label === key ? streak.current + 1 : 0;
+    if (streak.current !== HEARD_FRAMES) return;
+    // Back-date to when the chord first rang (the frames it took to be sure).
+    const seconds = Math.max(0.1, (performance.now() - startAt.current) / 1000 - (HEARD_FRAMES - 1) * 0.04);
+    setElapsed(seconds);
+    setHeardNote(`Heard ${key} ring clean in ${seconds.toFixed(2)} s`);
+    guitar.beep({ hz: 990, dur: 0.12 });
+    void judge(true, seconds).then(() => {
+      if (rounds.length + 1 < ROUNDS) timers.current.push(setTimeout(() => beginRef.current(), 1400));
+    });
+  }, { theoryOnly: true });
+  useEffect(() => {
+    if (phase === "go") streak.current = 0;
+    if (phase === "wait") setHeardNote("");
+  }, [phase]);
 
   // Live clock while waiting for the shape.
   useEffect(() => {
@@ -128,7 +161,7 @@ export default function RecallGame() {
       <PageHeader
         eyebrow={<Link to="/path" className="hover:text-ink">Path</Link>}
         title="Chord recall"
-        lead="Take your hand off the neck. When a chord name appears, form the shape and tap the moment every finger is down."
+        lead="Take your hand off the neck. When a chord name appears, form the shape and strum it. With the mic on it's hands-free; without it, tap the moment every finger is down."
       />
 
       <div className={`${cardClass} mx-auto max-w-[640px] p-5 sm:p-8`}>
@@ -147,7 +180,8 @@ export default function RecallGame() {
         <div className="flex min-h-[300px] flex-col items-center justify-center gap-5 text-center">
           {phase === "ready" && (
             <>
-              <p className="text-muted">{index === 0 ? "Hands off the neck, ready?" : "Shake your hand out, then go again."}</p>
+              {heardNote && <p className="font-medium text-good">✓ {heardNote}</p>}
+              <p className="text-muted">{index === 0 ? "Hands off the neck, ready?" : listen.on ? "Next chord coming up…" : "Shake your hand out, then go again."}</p>
               <button onClick={begin} className="rounded-xl bg-ink px-8 py-3 text-[15px] font-medium text-bg hover:opacity-90">
                 {index === 0 ? "Start" : "Next chord"} <span className="ml-1 opacity-60">Space</span>
               </button>
@@ -161,6 +195,7 @@ export default function RecallGame() {
               <div className="text-[72px] font-[650] leading-none tracking-[-0.04em] animate-[pop_0.2s_ease-out]">{chord.key}</div>
               <div className="text-sm text-muted">{chord.name}</div>
               <div className="font-mono text-xl tabular-nums text-muted">{elapsed.toFixed(1)} s</div>
+              {listen.on && <div className="text-[13px] text-muted">{listen.heard === key ? "Hearing it…" : "Strum when your fingers are down"}</div>}
               <button onClick={gotIt} className="rounded-xl bg-accent px-10 py-4 text-[16px] font-semibold text-white hover:opacity-90">
                 Got it <span className="ml-1 opacity-70">Space</span>
               </button>
@@ -203,6 +238,10 @@ export default function RecallGame() {
               </div>
             </>
           )}
+        </div>
+
+        <div className="mt-6">
+          <ListenPanel listen={listen} teachable={false} hint="With the mic on, strum the chord: the clock stops by itself when it rings clean, and the next chord follows." />
         </div>
 
         {skillProgress && focus && (
