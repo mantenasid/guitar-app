@@ -1,6 +1,7 @@
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { NavLink, Outlet, useLocation } from "react-router";
 import { stopPlayback } from "@/audio/playback";
+import { preloadHomePhotos } from "@/features/home/HomePage";
 import { applyTheme, useDark, useSettings } from "@/progress/settings";
 import { Haze } from "./Haze";
 import { glassClass } from "./ui";
@@ -15,6 +16,14 @@ const LINKS = [
   { to: "/gym", label: "Gym", paths: GYM_PATHS },
   { to: "/ear", label: "Ear training", paths: ["/ear"] },
 ];
+
+/** Pull in the menu's pages and the home photos once the first screen has settled, so tapping a tab never waits on the network. */
+function warmUp() {
+  void import("@/features/tuner/TunerPage");
+  void import("@/features/gym/GymPage");
+  void import("@/features/ear/EarPage");
+  preloadHomePhotos();
+}
 
 const isUnder = (pathname: string, paths: string[]) => paths.some(p => (p === "/" ? pathname === "/" : pathname === p || pathname.startsWith(p + "/")));
 
@@ -101,10 +110,15 @@ export function AppShell() {
     window.scrollTo(0, 0);
   }, [pathname]);
 
+  useEffect(() => {
+    const id = window.requestIdleCallback ? window.requestIdleCallback(warmUp) : window.setTimeout(warmUp, 1500);
+    return () => (window.cancelIdleCallback ? window.cancelIdleCallback(id) : window.clearTimeout(id));
+  }, []);
+
   const home = pathname === "/";
   const nav = (
     <header
-      className={`no-print z-20 px-3 pt-3 sm:px-6 sm:pt-4 ${
+      className={`no-print z-20 px-3 [view-transition-name:site-nav] pt-3 sm:px-6 sm:pt-4 ${
         // On home the bar floats over the photo; elsewhere it sticks to the top as the page scrolls under it.
         // Over the bright day photo the glass is smoked and the text cream, so the sky can't wash the links out.
         home
@@ -113,7 +127,7 @@ export function AppShell() {
       }`}
     >
       <nav className={`mx-auto flex max-w-[1080px] flex-wrap items-center gap-x-6 rounded-2xl px-3 ${glassClass} sm:h-14 sm:flex-nowrap sm:pr-2.5 sm:pl-4`}>
-        <NavLink to="/" className="flex h-12 items-center gap-2.5 whitespace-nowrap font-brand text-[17px] font-bold tracking-[-0.02em] text-ink sm:h-auto">
+        <NavLink to="/" viewTransition className="flex h-12 items-center gap-2.5 whitespace-nowrap font-brand text-[17px] font-bold tracking-[-0.02em] text-ink sm:h-auto">
           <FluteMark />
           Woodshed
         </NavLink>
@@ -122,6 +136,7 @@ export function AppShell() {
             <NavLink
               key={l.to}
               to={l.to}
+              viewTransition
               className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-sm transition duration-200 ease-in-out ${isUnder(pathname, l.paths) ? "bg-surface-2 text-ink" : "text-muted hover:text-ink"}`}
             >
               {l.label}
@@ -139,7 +154,9 @@ export function AppShell() {
   return home ? (
     <div className="grid h-svh min-h-[480px] grid-rows-[minmax(0,1fr)] overflow-hidden">
       {nav}
-      <Outlet />
+      <Suspense fallback={null}>
+        <Outlet />
+      </Suspense>
       <Toasts />
     </div>
   ) : (
@@ -147,7 +164,9 @@ export function AppShell() {
       <Haze />
       {nav}
       <main className="mx-auto w-full max-w-[1080px] px-4 pt-7 pb-24 sm:px-7 sm:pt-10">
-        <Outlet />
+        <Suspense fallback={null}>
+          <Outlet />
+        </Suspense>
       </main>
       <Toasts />
     </div>

@@ -32,13 +32,17 @@ const GYM_SECTIONS: { title: string; note: string; areas: Area[] }[] = [
   },
   {
     title: "Chords",
-    note: "Shapes, changes between them, and rhythm.",
+    note: "Shapes and the changes between them.",
     areas: [
       { title: "Chords", blurb: "Open, blues and power chords, recalled faster each time.", to: "/chords?group=basic", art: "chordBox", palette: { bg: "from-[#1a1003] to-[#b45309]", ink: "text-[#fde68a]", label: "fill-[#f59e0b]" }, units: ["Open chords", "Blues chords", "Shuffles", "Power chords"] },
       { title: "Barre chords", blurb: "Mini barres first, then full E and A shapes.", to: "/chords?group=barre", art: "barre", palette: { bg: "from-[#22040a] to-[#be123c]", ink: "text-[#fecdd3]", label: "fill-[#e11d48]" }, units: ["Barre chords"] },
       { title: "Transitions", blurb: "One-minute changes between chords you know.", to: "/transitions", art: "changes", palette: { bg: "from-[#061026] to-[#1d4ed8]", ink: "text-[#bfdbfe]", label: "fill-[#3b82f6]" }, units: ["Changes"] },
-      { title: "Strumming", blurb: "Patterns from steady downs to 16th-note grooves.", to: "/strumming", art: "strums", palette: { bg: "from-[#07170a] to-[#15803d]", ink: "text-[#bbf7d0]", label: "fill-[#22c55e]" }, units: ["Strumming"] },
     ],
+  },
+  {
+    title: "Rhythm",
+    note: "Keep time with your strumming hand.",
+    areas: [{ title: "Strumming", blurb: "Patterns from steady downs to 16th-note grooves.", to: "/strumming", art: "strums", palette: { bg: "from-[#07170a] to-[#15803d]", ink: "text-[#bbf7d0]", label: "fill-[#22c55e]" }, units: ["Strumming"] }],
   },
   {
     title: "Scales and arpeggios",
@@ -69,7 +73,7 @@ export default function GymPage() {
     <>
       <PageHeader
         title="Gym"
-        lead="Work through it top to bottom: warm up, then notes, chords, scales, and finish by playing along."
+        lead="Work through it top to bottom: warm up, then notes, chords, rhythm, scales, and finish by playing along."
       />
       {GYM_SECTIONS.map((sec, i) => (
         <Section key={sec.title} num={i + 1} title={sec.title} note={sec.note}>

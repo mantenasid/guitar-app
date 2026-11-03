@@ -50,7 +50,7 @@ function TunerString({ string, cents, tuned }: StringProps) {
   return (
     <div role="img" aria-label={`${STRING_NAMES[string]} string${gold ? ", in tune" : ""}`} className="flex h-full justify-center">
       <span
-        className="relative h-full rounded-full bg-ink/85 transition-[box-shadow] duration-200 ease-in-out"
+        className="relative h-full rounded-full bg-[#f4f4f5]/85 transition-[box-shadow] duration-200 ease-in-out"
         style={{
           width,
           backgroundImage: texture,

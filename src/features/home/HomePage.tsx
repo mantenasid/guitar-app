@@ -28,6 +28,15 @@ interface Scene {
   pads: Pad[];
 }
 
+/** Fetch and decode both photos ahead of time, so coming home never flashes an empty frame before the picture lands. */
+export function preloadHomePhotos() {
+  for (const src of [studio, day]) {
+    const img = new Image();
+    img.src = src;
+    void img.decode().catch(() => {});
+  }
+}
+
 /** The studio at night for dark mode, and open to the hills by day for light mode. */
 const NIGHT: Scene = {
   src: studio,
