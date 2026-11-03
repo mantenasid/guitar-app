@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation } from "react-router";
 import { stopPlayback } from "@/audio/playback";
 import { applyTheme, useSettings, type Theme } from "@/progress/settings";
 import { Haze } from "./Haze";
+import { glassClass } from "./ui";
 import { Toasts } from "./Toasts";
 
 /** Pages that belong to the gym, so its tab stays lit on them. */
@@ -72,13 +73,11 @@ export function AppShell() {
   const nav = (
     <header
       className={`no-print z-20 px-3 pt-3 sm:px-6 sm:pt-4 ${
-        home
-          ? // On home the bar floats over the photo, so it is always dark whatever the theme.
-            "self-start [--bg:#0f0f11] [--ink:#f4f4f5] [--line:rgb(255_255_255/0.1)] [--muted:#a1a1aa] [--surface-2:rgb(255_255_255/0.08)] [--surface:#0f0f11] [grid-area:1/1]"
-          : "sticky top-0"
+        // On home the bar floats over the photo; elsewhere it sticks to the top as the page scrolls under it.
+        home ? "self-start [grid-area:1/1]" : "sticky top-0"
       }`}
     >
-      <nav className="mx-auto flex max-w-[1080px] flex-wrap items-center gap-x-6 rounded-2xl border border-line bg-surface/70 px-3 shadow-card backdrop-blur-xl sm:h-14 sm:flex-nowrap sm:pr-2.5 sm:pl-4">
+      <nav className={`mx-auto flex max-w-[1080px] flex-wrap items-center gap-x-6 rounded-2xl px-3 ${glassClass} sm:h-14 sm:flex-nowrap sm:pr-2.5 sm:pl-4`}>
         <NavLink to="/" className="flex h-12 items-center gap-2.5 whitespace-nowrap text-[15px] font-[650] tracking-[-0.01em] text-ink sm:h-auto">
           <PickMark />
           Guitar Practice

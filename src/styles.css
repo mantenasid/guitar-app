@@ -4,25 +4,30 @@
    so light, dark and print only need to swap these values. */
 :root {
   color-scheme: light;
-  --bg: #fafaf9;
-  --surface: #ffffff;
-  --surface-2: #f4f4f2;
-  --ink: #18181b;
-  --ink-2: #3f3f46;
-  --muted: #71717a;
-  --faint: #a1a1aa;
-  --line: #ebebe8;
-  --line-2: #d9d9d5;
-  --accent: #c2410c;
-  --accent-soft: #fff1e8;
-  --good: #15803d;
-  --good-soft: #eaf7ee;
-  --dot: #52525b;
-  --shadow: 0 1px 2px rgb(24 24 27 / 0.04), 0 4px 16px rgb(24 24 27 / 0.04);
-  /* Drifting haze behind the pages: grey smoke in light, spotlight white in dark. */
-  --glow: rgb(24 24 27 / 0.06);
-  --glow-strong: rgb(24 24 27 / 0.05);
-  --grain-opacity: 0.025;
+  /* Light mode is the day studio: cream walls, sky blue and the green of the hills. */
+  --bg: #f4eee1;
+  --surface: #faf6ec;
+  --surface-2: #ece5d4;
+  --ink: #1e2a22;
+  --ink-2: #3a463d;
+  --muted: #6b7366;
+  --faint: #a3a898;
+  --line: #e4dccb;
+  --line-2: #d3cab5;
+  --accent: #2b74ab;
+  --accent-soft: #e2edf3;
+  --good: #3b7a45;
+  --good-soft: #e5eedc;
+  --dot: #4f5a51;
+  --shadow: 0 1px 2px rgb(60 50 30 / 0.05), 0 4px 16px rgb(60 50 30 / 0.05);
+  /* Drifting haze behind the pages: sunlight, sky and hills by day, spotlight white at night. */
+  --glow: rgb(135 185 225 / 0.24);
+  --glow-2: rgb(140 185 120 / 0.2);
+  --glow-strong: rgb(255 240 205 / 0.75);
+  --grain-opacity: 0.035;
+  /* Liquid glass for the header: a thin tint over whatever is behind it, and a bright rim. */
+  --glass: rgb(250 246 236 / 0.3);
+  --glass-rim: rgb(255 255 255 / 0.8);
 
   /* Fretting fingers: index, middle, ring, little */
   --f1: #f59e0b;
@@ -48,7 +53,8 @@
     --accent: #fb8a4c; --accent-soft: #2b1a10;
     --good: #4cc38a; --good-soft: #10261b;
     --dot: #a1a1aa; --shadow: none;
-    --glow: rgb(255 255 255 / 0.07); --glow-strong: rgb(255 255 255 / 0.09); --grain-opacity: 0.05;
+    --glow: rgb(255 255 255 / 0.07); --glow-2: var(--glow); --glow-strong: rgb(255 255 255 / 0.09); --grain-opacity: 0.05;
+    --glass: rgb(24 24 27 / 0.4); --glass-rim: rgb(255 255 255 / 0.14);
     --f4: #ea580c;
   }
 }
@@ -60,7 +66,8 @@
   --accent: #fb8a4c; --accent-soft: #2b1a10;
   --good: #4cc38a; --good-soft: #10261b;
   --dot: #a1a1aa; --shadow: none;
-  --glow: rgb(255 255 255 / 0.07); --glow-strong: rgb(255 255 255 / 0.09); --grain-opacity: 0.05;
+  --glow: rgb(255 255 255 / 0.07); --glow-2: var(--glow); --glow-strong: rgb(255 255 255 / 0.09); --grain-opacity: 0.05;
+  --glass: rgb(24 24 27 / 0.4); --glass-rim: rgb(255 255 255 / 0.14);
   --f4: #ea580c;
 }
 
@@ -83,6 +90,9 @@
   --shadow-card: var(--shadow);
   --color-glow: var(--glow);
   --color-glow-strong: var(--glow-strong);
+  --color-glow-2: var(--glow-2);
+  --color-glass: var(--glass);
+  --color-glass-rim: var(--glass-rim);
 }
 
 @theme {

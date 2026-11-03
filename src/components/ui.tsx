@@ -50,6 +50,13 @@ export function Section({ id, num, title, note, aside, children }: { id?: string
   );
 }
 
+/**
+ * Liquid glass: a thin tint that lets what is behind show through, blurred and with its colours lifted,
+ * with a bright rim along the top edge and light catching the top left.
+ */
+export const glassClass =
+  "border border-glass-rim/40 bg-glass bg-linear-to-br from-glass-rim/45 via-transparent to-transparent backdrop-blur-xl backdrop-saturate-[1.8] shadow-[inset_0_1px_0_var(--glass-rim),inset_0_-1px_0_rgb(255_255_255/0.06),0_12px_32px_-12px_rgb(30_40_30/0.35)]";
+
 export const cardClass = "block rounded-[14px] border border-line bg-surface shadow-card";
 
 export function CardGrid({ children }: { children: ReactNode }) {

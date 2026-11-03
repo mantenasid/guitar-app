@@ -1,4 +1,5 @@
 // Small preferences and the running practice timer, kept in localStorage.
+import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { addPractice } from "./db";
@@ -52,4 +53,19 @@ export const useSettings = create<Settings>()(
 export function applyTheme(theme: Theme) {
   if (theme === "auto") delete document.documentElement.dataset.theme;
   else document.documentElement.dataset.theme = theme;
+}
+
+const darkQuery = () => window.matchMedia("(prefers-color-scheme: dark)");
+
+/** Whether the page is showing dark colours, following the system when the theme is auto. */
+export function useDark() {
+  const theme = useSettings(s => s.theme);
+  const [systemDark, setSystemDark] = useState(() => darkQuery().matches);
+  useEffect(() => {
+    const query = darkQuery();
+    const onChange = () => setSystemDark(query.matches);
+    query.addEventListener("change", onChange);
+    return () => query.removeEventListener("change", onChange);
+  }, []);
+  return theme === "auto" ? systemDark : theme === "dark";
 }
