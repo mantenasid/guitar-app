@@ -111,7 +111,7 @@ function ThemeToggle() {
   );
 }
 
-/** True while you're scrolling down past the top, so the nav can slide out of the way; any scroll up brings it back. */
+/** True while you're scrolling down past the top, so the nav can fade out of the way; any scroll up brings it back. */
 function useScrolledDown() {
   const [down, setDown] = useState(false);
   useEffect(() => {
@@ -151,7 +151,7 @@ export function AppShell() {
         // Over the bright day photo the glass is smoked and the text cream, so the sky can't wash the links out.
         home
           ? "self-start [grid-area:1/1] [--bg:#1e2a22] [--glass-rim:rgb(255_255_255/0.22)] [--glass:rgb(28_34_30/0.42)] [--ink:#f6f1e4] [--muted:rgb(246_241_228/0.78)] [--surface-2:rgb(255_255_255/0.16)]"
-          : `sticky top-0 transition-transform duration-200 ease-in-out focus-within:translate-y-0 ${hidden ? "-translate-y-[calc(100%+8px)]" : ""}`
+          : `sticky top-0 transition-opacity duration-300 ease-in-out focus-within:pointer-events-auto focus-within:opacity-100 ${hidden ? "pointer-events-none opacity-0" : ""}`
       }`}
     >
       <nav className={`mx-auto flex max-w-[1080px] flex-wrap items-center gap-x-6 rounded-2xl px-3 ${glassClass} sm:h-14 sm:flex-nowrap sm:pr-2.5 sm:pl-4`}>
