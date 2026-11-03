@@ -1,4 +1,5 @@
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { flushSync } from "react-dom";
 import { NavLink, Outlet, useLocation } from "react-router";
 import { stopPlayback } from "@/audio/playback";
 import { preloadHomePhotos } from "@/features/home/HomePage";
@@ -87,7 +88,16 @@ function ThemeToggle() {
     // Read the system now rather than trusting the last change event, so a click is never swallowed.
     const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     const nextDark = !(theme === "auto" ? systemDark : theme === "dark");
-    setTheme(nextDark === systemDark ? "auto" : nextDark ? "dark" : "light");
+    const next = nextDark === systemDark ? "auto" : nextDark ? "dark" : "light";
+    const swap = () => {
+      flushSync(() => setTheme(next));
+      applyTheme(next);
+    };
+    // Crossfade the whole page from one look to the other rather than snapping every colour at once.
+    const root = document.documentElement;
+    if (!document.startViewTransition) return swap();
+    root.classList.add("theme-swap");
+    document.startViewTransition(swap).finished.finally(() => root.classList.remove("theme-swap"));
   };
   return (
     <button
@@ -99,6 +109,23 @@ function ThemeToggle() {
       {dark ? <SunIcon /> : <MoonIcon />}
     </button>
   );
+}
+
+/** True while you're scrolling down past the top, so the nav can slide out of the way; any scroll up brings it back. */
+function useScrolledDown() {
+  const [down, setDown] = useState(false);
+  useEffect(() => {
+    let last = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (Math.abs(y - last) < 6) return;
+      setDown(y > last && y > 80);
+      last = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  return down;
 }
 
 export function AppShell() {
@@ -116,6 +143,7 @@ export function AppShell() {
   }, []);
 
   const home = pathname === "/";
+  const hidden = useScrolledDown() && !home;
   const nav = (
     <header
       className={`no-print z-20 px-3 [view-transition-name:site-nav] pt-3 sm:px-6 sm:pt-4 ${
@@ -123,7 +151,7 @@ export function AppShell() {
         // Over the bright day photo the glass is smoked and the text cream, so the sky can't wash the links out.
         home
           ? "self-start [grid-area:1/1] [--bg:#1e2a22] [--glass-rim:rgb(255_255_255/0.22)] [--glass:rgb(28_34_30/0.42)] [--ink:#f6f1e4] [--muted:rgb(246_241_228/0.78)] [--surface-2:rgb(255_255_255/0.16)]"
-          : "sticky top-0"
+          : `sticky top-0 transition-transform duration-200 ease-in-out focus-within:translate-y-0 ${hidden ? "-translate-y-[calc(100%+8px)]" : ""}`
       }`}
     >
       <nav className={`mx-auto flex max-w-[1080px] flex-wrap items-center gap-x-6 rounded-2xl px-3 ${glassClass} sm:h-14 sm:flex-nowrap sm:pr-2.5 sm:pl-4`}>

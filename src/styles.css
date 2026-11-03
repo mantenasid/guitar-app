@@ -174,6 +174,11 @@
 ::view-transition-group(site-nav) { animation-duration: 0.28s; animation-timing-function: ease-in-out; }
 @keyframes page-out { to { opacity: 0; } }
 @keyframes page-in { from { opacity: 0; transform: translateY(6px); } }
+/* Switching day and night: one slow crossfade of the whole page, nav bar included. */
+.theme-swap::view-transition-old(*) { animation: none; }
+.theme-swap::view-transition-new(*) { animation: 0.45s ease-in-out both theme-fade; }
+.theme-swap::view-transition-group(*) { animation: none; }
+@keyframes theme-fade { from { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }
