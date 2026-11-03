@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState, type RefObject } from "react";
 import { flushSync } from "react-dom";
 import { NavLink, Outlet, useLocation } from "react-router";
 import { stopPlayback } from "@/audio/playback";
@@ -111,22 +111,28 @@ function ThemeToggle() {
   );
 }
 
-/** True while you're scrolling down past the top, so the nav can fade out of the way; any scroll up brings it back. */
-function useScrolledDown() {
-  const [down, setDown] = useState(false);
+/** How visible the nav should be. Scrolling down fades it in step with the page, reaching nothing just as the page's
+ * first line meets the bar's bottom edge; any scroll up brings it straight back. */
+function useNavOpacity(nav: RefObject<HTMLElement | null>) {
+  const [opacity, setOpacity] = useState(1);
   useEffect(() => {
     let last = window.scrollY;
+    let up = false;
     const onScroll = () => {
       const y = window.scrollY;
-      if (Math.abs(y - last) < 3) return;
-      // Fade out on the first nudge down, before anything has slid under the bar.
-      setDown(y > last && y > 2);
+      if (y !== last) up = y < last;
       last = y;
+      const bar = nav.current;
+      const first = document.querySelector("main")?.firstElementChild;
+      if (!bar || !first) return;
+      // How far down the page that first line touches the bar.
+      const meet = first.getBoundingClientRect().top + y - bar.offsetHeight;
+      setOpacity(up ? 1 : Math.min(1, Math.max(0, 1 - y / Math.max(meet, 1))));
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-  return down;
+  }, [nav]);
+  return opacity;
 }
 
 export function AppShell() {
@@ -144,15 +150,18 @@ export function AppShell() {
   }, []);
 
   const home = pathname === "/";
-  const hidden = useScrolledDown() && !home;
+  const navRef = useRef<HTMLElement>(null);
+  const opacity = useNavOpacity(navRef);
   const nav = (
     <header
+      ref={navRef}
+      style={home ? undefined : { opacity }}
       className={`no-print z-20 px-3 [view-transition-name:site-nav] pt-3 sm:px-6 sm:pt-4 ${
         // On home the bar floats over the photo; elsewhere it sticks to the top as the page scrolls under it.
         // Over the bright day photo the glass is smoked and the text cream, so the sky can't wash the links out.
         home
           ? "self-start [grid-area:1/1] [--bg:#1e2a22] [--glass-rim:rgb(255_255_255/0.22)] [--glass:rgb(28_34_30/0.42)] [--ink:#f6f1e4] [--muted:rgb(246_241_228/0.78)] [--surface-2:rgb(255_255_255/0.16)]"
-          : `sticky top-0 transition-opacity duration-150 ease-in-out focus-within:pointer-events-auto focus-within:opacity-100 ${hidden ? "pointer-events-none opacity-0" : ""}`
+          : `sticky top-0 transition-opacity duration-200 ease-out focus-within:pointer-events-auto focus-within:opacity-100! ${opacity === 0 ? "pointer-events-none" : ""}`
       }`}
     >
       <nav className={`mx-auto flex max-w-[1080px] flex-wrap items-center gap-x-6 rounded-2xl px-3 ${glassClass} sm:h-14 sm:flex-nowrap sm:pr-2.5 sm:pl-4`}>
