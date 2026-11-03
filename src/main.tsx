@@ -1,6 +1,6 @@
 import { StrictMode, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
-import { createBrowserRouter, RouterProvider } from "react-router";
+import { createBrowserRouter, Navigate, RouterProvider } from "react-router";
 import { AppShell } from "@/components/AppShell";
 import { HomePage } from "@/features/home/HomePage";
 import "./styles.css";
@@ -11,7 +11,6 @@ const TransitionsPage = lazy(() => import("@/features/transitions/TransitionsPag
 const StrummingPage = lazy(() => import("@/features/strumming/StrummingPage"));
 const ScalesPage = lazy(() => import("@/features/scales/ScalesPage"));
 const ScaleDetailPage = lazy(() => import("@/features/scales/ScaleDetailPage"));
-const PathPage = lazy(() => import("@/features/path/PathPage"));
 const RecallGame = lazy(() => import("@/features/play/RecallGame"));
 const TunerPage = lazy(() => import("@/features/tuner/TunerPage"));
 const FretboardPage = lazy(() => import("@/features/fretboard/FretboardPage"));
@@ -29,7 +28,6 @@ const router = createBrowserRouter([
     element: <AppShell />,
     children: [
       { index: true, element: <HomePage /> },
-      { path: "path", element: page(<PathPage />) },
       { path: "play/recall", element: page(<RecallGame />) },
       { path: "chords", element: page(<ChordsPage />) },
       { path: "transitions", element: page(<TransitionsPage />) },
@@ -39,6 +37,8 @@ const router = createBrowserRouter([
       { path: "tuner", element: page(<TunerPage />) },
       { path: "fretboard", element: page(<FretboardPage />) },
       { path: "gym", element: page(<GymPage />) },
+      // The old path overview folded into the gym; keep its bookmarks working.
+      { path: "path", element: <Navigate to="/gym" replace /> },
       { path: "ear", element: page(<EarPage />) },
       { path: "warmups", element: page(<WarmupsPage />) },
       { path: "fingerpicking", element: page(<FingerpickingPage />) },

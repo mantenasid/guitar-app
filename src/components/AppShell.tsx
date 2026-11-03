@@ -7,7 +7,7 @@ import { glassClass } from "./ui";
 import { Toasts } from "./Toasts";
 
 /** Pages that belong to the gym, so its tab stays lit on them. */
-const GYM_PATHS = ["/gym", "/path", "/play", "/chords", "/transitions", "/strumming", "/scales", "/fretboard", "/warmups", "/fingerpicking", "/arpeggios", "/progressions"];
+const GYM_PATHS = ["/gym", "/play", "/chords", "/transitions", "/strumming", "/scales", "/fretboard", "/warmups", "/fingerpicking", "/arpeggios", "/progressions"];
 
 const LINKS = [
   { to: "/", label: "Home", paths: ["/"] },

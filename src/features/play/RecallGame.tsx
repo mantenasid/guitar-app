@@ -159,7 +159,7 @@ export default function RecallGame() {
   return (
     <>
       <PageHeader
-        eyebrow={<Link to="/path" className="hover:text-ink">Path</Link>}
+        eyebrow={<Link to="/gym" className="hover:text-ink">Gym</Link>}
         title="Chord recall"
         lead="Take your hand off the neck. When a chord name appears, form the shape and strum it. With the mic on it's hands-free; without it, tap the moment every finger is down."
       />
@@ -234,7 +234,7 @@ export default function RecallGame() {
               {best !== undefined && <p className="text-muted">Fastest clean shape: <b className="text-ink">{best.toFixed(2)} s</b> ({["not yet level 1", "level 1", "level 2", "level 3", "mastered"][levelFor("chord", best)]})</p>}
               <div className="flex gap-2">
                 <button onClick={begin} className="rounded-xl bg-ink px-6 py-3 font-medium text-bg hover:opacity-90">Play again</button>
-                <Link to="/path" className="rounded-xl border border-line-2 px-6 py-3 font-medium hover:border-faint">Back to path</Link>
+                <Link to="/gym" className="rounded-xl border border-line-2 px-6 py-3 font-medium hover:border-faint">Back to gym</Link>
               </div>
             </>
           )}

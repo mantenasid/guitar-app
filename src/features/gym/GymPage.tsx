@@ -1,5 +1,4 @@
 // The gym: every practice area, grouped into sections from warm-up to playing along.
-import { Link } from "react-router";
 import { PageHeader, Section } from "@/components/ui";
 import { useProgress } from "@/progress/hooks";
 import { SKILLS } from "@/skills/registry";
@@ -71,11 +70,6 @@ export default function GymPage() {
       <PageHeader
         title="Gym"
         lead="Work through it top to bottom: warm up, then notes, chords, scales, and finish by playing along."
-        aside={
-          <Link to="/path" className="text-[13.5px] font-medium text-muted hover:text-ink">
-            See the whole path →
-          </Link>
-        }
       />
       {GYM_SECTIONS.map((sec, i) => (
         <Section key={sec.title} num={i + 1} title={sec.title} note={sec.note}>
