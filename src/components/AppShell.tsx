@@ -26,22 +26,31 @@ export function formatDuration(sec: number) {
   return h ? `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}` : `${m}:${String(s).padStart(2, "0")}`;
 }
 
-/** A woodshed: a gable roof over a soundhole, strung, on a tile of warm wood. Same drawing as public/icon.svg. */
-function ShedMark() {
+/** The Divje Babe bone flute, the oldest instrument we know of, flattened into polished gold at the angle it's held in the museum photo.
+ * Same drawing as public/icon.svg, without the tile, so the header shows through its two finger holes. */
+function FluteMark() {
   return (
-    <svg viewBox="0 0 24 24" className="size-6 drop-shadow-sm" aria-hidden>
+    <svg viewBox="0 0 24 24" className="size-7 drop-shadow-[0_1px_1.5px_rgb(0_0_0/0.35)]" aria-hidden>
       <defs>
-        <linearGradient id="shed-wood" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#d0925a" />
-          <stop offset="1" stopColor="#6b3f22" />
+        {/* Bands across the bone, like light on a polished rod. */}
+        <linearGradient id="flute-gold" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#7a4f12" />
+          <stop offset=".2" stopColor="#d9ac4a" />
+          <stop offset=".36" stopColor="#fff3c8" />
+          <stop offset=".52" stopColor="#e3b452" />
+          <stop offset=".8" stopColor="#9c6b1c" />
+          <stop offset="1" stopColor="#d2a24a" />
         </linearGradient>
       </defs>
-      <rect width="24" height="24" rx="5.5" fill="url(#shed-wood)" />
-      {/* Grain. */}
-      <path d="M0 8.5q6 1.6 12 0t12 0M0 17.5q6 1.6 12 0t12 0" fill="none" stroke="#2a1a10" strokeOpacity=".18" strokeWidth=".6" />
-      <path d="M4.5 11 12 4.6l7.5 6.4" fill="none" stroke="#f6f1e4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="12" cy="15.2" r="4.2" fill="#2a1a10" stroke="#f6f1e4" strokeWidth="1.2" />
-      <path d="M10.6 10.6v10.2M12 10.2v10.6M13.4 10.6v10.2" stroke="#f6f1e4" strokeOpacity=".85" strokeWidth=".55" strokeLinecap="round" />
+      <g transform="translate(12 12) rotate(-42) scale(1.02 .88)">
+        <path
+          fill="url(#flute-gold)"
+          fillRule="evenodd"
+          d="M-3.4-11.4-2.3-12.8-.8-12.2.6-13.1 2-12.3 3.4-12.6C3.6-8 3-3 3.1 2 3.2 6 3.6 9 3.7 12.6L2.2 13.2Q.6 9.6-1 11.6L-2.2 12.9-3.4 12.3C-3.3 8-2.8 4-2.9 0-3-4-3.5-8-3.4-11.4ZM.1-6.1a1.2 1.45 0 1 0 .01 0ZM.2 1.6a1.4 1.7 0 1 0 .01 0Z"
+        />
+        {/* Specular glint down the length. */}
+        <path d="M-1.6-11.2C-1.9-6-1.6 2-1.8 11" fill="none" stroke="#fffbe8" strokeOpacity=".55" strokeWidth=".35" strokeLinecap="round" />
+      </g>
     </svg>
   );
 }
@@ -91,8 +100,8 @@ export function AppShell() {
       }`}
     >
       <nav className={`mx-auto flex max-w-[1080px] flex-wrap items-center gap-x-6 rounded-2xl px-3 ${glassClass} sm:h-14 sm:flex-nowrap sm:pr-2.5 sm:pl-4`}>
-        <NavLink to="/" className="flex h-12 items-center gap-2.5 whitespace-nowrap text-[15px] font-[650] tracking-[-0.01em] text-ink sm:h-auto">
-          <ShedMark />
+        <NavLink to="/" className="flex h-12 items-center gap-2.5 whitespace-nowrap font-brand text-[17px] font-bold tracking-[-0.02em] text-ink sm:h-auto">
+          <FluteMark />
           Woodshed
         </NavLink>
         <div className="no-scrollbar order-3 -mx-1 flex w-full gap-1 overflow-x-auto pb-2 sm:order-none sm:mx-0 sm:w-auto sm:flex-1 sm:justify-center sm:pb-0">
