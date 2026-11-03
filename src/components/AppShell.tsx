@@ -51,6 +51,23 @@ function FluteMark() {
   );
 }
 
+function SunIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-[19px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+      <circle cx="12" cy="12" r="4.2" fill="currentColor" />
+      <path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6" />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-[19px]" fill="currentColor" aria-hidden>
+      <path d="M20.4 14.6A8.6 8.6 0 0 1 9.4 3.6a8.6 8.6 0 1 0 11 11Z" />
+    </svg>
+  );
+}
+
 function ThemeToggle() {
   const theme = useSettings(s => s.theme);
   const setTheme = useSettings(s => s.setTheme);
@@ -68,9 +85,9 @@ function ThemeToggle() {
       onClick={flip}
       title={dark ? "Switch to day" : "Switch to night"}
       aria-label={dark ? "Switch to day" : "Switch to night"}
-      className="rounded-lg px-2.5 py-1.5 text-[13px] text-muted transition duration-200 ease-in-out hover:bg-surface-2 hover:text-ink"
+      className="flex size-9 items-center justify-center rounded-lg text-ink-2 transition duration-200 ease-in-out hover:bg-surface-2 hover:text-ink"
     >
-      {dark ? "☀︎" : "☾"}
+      {dark ? <SunIcon /> : <MoonIcon />}
     </button>
   );
 }
