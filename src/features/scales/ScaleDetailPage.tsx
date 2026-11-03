@@ -3,6 +3,7 @@ import { ALL_SCALES, SCALE_BY_ID, scaleGroupOf } from "@/content";
 import type { Scale } from "@/content/types";
 import { PageHeader, TickButton } from "@/components/ui";
 import { ShapePanel } from "./ShapePanel";
+import { TempoChallenge } from "@/components/TempoChallenge";
 import { FirstPosition } from "./special/FirstPosition";
 import { Sequences } from "./special/Sequences";
 import { PopularKeys } from "./special/PopularKeys";
@@ -73,6 +74,10 @@ export default function ScaleDetailPage() {
           ))}
         </div>
       )}
+
+      <div className="mt-5">
+        <TempoChallenge skillId={`scale:${scale.id}`} hint="Play the scale up and down, one note per click (or two per click for an 8th-note feel)." />
+      </div>
 
       <Pager index={index} />
     </>

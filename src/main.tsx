@@ -11,6 +11,8 @@ const TransitionsPage = lazy(() => import("@/features/transitions/TransitionsPag
 const StrummingPage = lazy(() => import("@/features/strumming/StrummingPage"));
 const ScalesPage = lazy(() => import("@/features/scales/ScalesPage"));
 const ScaleDetailPage = lazy(() => import("@/features/scales/ScaleDetailPage"));
+const PathPage = lazy(() => import("@/features/path/PathPage"));
+const RecallGame = lazy(() => import("@/features/play/RecallGame"));
 
 const page = (el: React.ReactNode) => <Suspense fallback={null}>{el}</Suspense>;
 
@@ -19,6 +21,8 @@ const router = createBrowserRouter([
     element: <AppShell />,
     children: [
       { index: true, element: <HomePage /> },
+      { path: "path", element: page(<PathPage />) },
+      { path: "play/recall", element: page(<RecallGame />) },
       { path: "chords", element: page(<ChordsPage />) },
       { path: "transitions", element: page(<TransitionsPage />) },
       { path: "strumming", element: page(<StrummingPage />) },

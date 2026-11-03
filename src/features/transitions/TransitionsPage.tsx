@@ -5,7 +5,7 @@ import { Fretboard } from "@/components/Fretboard";
 import { PageHeader, PlayButton, Section, Sparkline, StageDot, TargetBar, cardClass } from "@/components/ui";
 import { formatDuration } from "@/components/AppShell";
 import * as guitar from "@/audio/guitar";
-import { recordAttempt } from "@/progress/db";
+import { recordResult } from "@/progress/record";
 import { useBests, useHistory } from "@/progress/hooks";
 import { useSettings } from "@/progress/settings";
 import {
@@ -70,7 +70,7 @@ function Drill({ a, b, onPick, bests }: { a: string; b: string; onPick: (a: stri
       return;
     }
     const previous = bestFor(bests, r.a, r.b);
-    await recordAttempt(changeSkillId(r.a, r.b), r.count);
+    await recordResult(changeSkillId(r.a, r.b), r.count);
     setResult(drillFeedback(r.count, previous));
   }, [bests]);
 

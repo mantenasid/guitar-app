@@ -6,6 +6,13 @@ import { isSwing, startStrumLoop } from "@/audio/strum";
 import { stopPlayback } from "@/audio/playback";
 import { chordVoicing } from "@/music/shapes";
 import { useSettings } from "@/progress/settings";
+import { useProgress } from "@/progress/hooks";
+import { recordResult } from "@/progress/record";
+import { LevelPips } from "@/components/LevelPips";
+import { useSearchParams } from "react-router";
+
+/** Full bars you must play before claiming a tempo. */
+const MIN_BARS = 2;
 
 const CHORDS = ["G", "C", "D", "Em", "Am", "E", "A", "Dm", "E7", "A7", "B7", "E5", "A5"];
 
@@ -37,6 +44,10 @@ export default function StrummingPage() {
   const setStrum = useSettings(s => s.setStrum);
   const [playing, setPlaying] = useState<number | null>(null);
   const [slot, setSlot] = useState(-1);
+  const [bars, setBars] = useState(0);
+  const progress = useProgress();
+  const [params] = useSearchParams();
+  const focus = Number(params.get("pattern")) || null;
   const stopRef = useRef<(() => void) | null>(null);
 
   // The scheduler reads the latest settings every bar, so tempo changes apply live.
@@ -48,6 +59,7 @@ export default function StrummingPage() {
     stopRef.current = null;
     setPlaying(null);
     setSlot(-1);
+    setBars(0);
   };
 
   const play = (p: StrumPattern) => {
@@ -60,11 +72,25 @@ export default function StrummingPage() {
       click: settingsRef.current.click,
       sound: settingsRef.current.sound,
       notes: chordVoicing(CHORD_BY_KEY[settingsRef.current.chord]!.shape).map(n => n.midi),
-      onSlot: setSlot,
+      onSlot: i => {
+        setSlot(i);
+        if (i === -1) setBars(b => b + 1);
+      },
     }));
   };
 
   useEffect(() => () => stopRef.current?.(), []);
+  // Arriving from the path: jump to that pattern.
+  useEffect(() => {
+    if (focus) document.getElementById(`pattern-${focus}`)?.scrollIntoView({ block: "center" });
+  }, [focus]);
+
+  const claim = async () => {
+    if (playing === null) return;
+    const num = playing;
+    stop();
+    await recordResult(`strum:${num}`, strum.bpm);
+  };
   useEffect(() => {
     if (playing === null) return;
     const onKey = (e: KeyboardEvent) => {
@@ -115,14 +141,24 @@ export default function StrummingPage() {
         </label>
         <label className="inline-flex cursor-pointer items-center gap-2"><input type="checkbox" checked={strum.click} onChange={e => setStrum({ click: e.target.checked })} /> Click</label>
         <label className="inline-flex cursor-pointer items-center gap-2"><input type="checkbox" checked={strum.sound} onChange={e => setStrum({ sound: e.target.checked })} /> Guitar</label>
-        <span className="w-full sm:ml-auto sm:w-auto">
+        <span className="flex w-full flex-wrap items-center gap-3 sm:ml-auto sm:w-auto">
           {current ? (
             <>
-              <b className="font-[550] text-accent">{current.name}</b> on {strum.chord}
-              {isSwing(current) ? " · swing" : ""}
+              <span>
+                <b className="font-[550] text-accent">{current.name}</b> on {strum.chord}
+                {isSwing(current) ? " · swing" : ""}
+              </span>
+              <button
+                disabled={bars < MIN_BARS}
+                onClick={() => void claim()}
+                title={bars < MIN_BARS ? `Play along for ${MIN_BARS} full bars first` : "Save this tempo for the pattern"}
+                className="rounded-[9px] border border-good px-3 py-1.5 text-[13px] font-medium text-good disabled:border-line-2 disabled:text-faint"
+              >
+                ✓ Clean at {strum.bpm}
+              </button>
             </>
           ) : (
-            "Press play on any pattern"
+            "Press play, strum along, then claim the tempo"
           )}
         </span>
       </div>
@@ -142,7 +178,10 @@ export default function StrummingPage() {
                       <Beats slots={p.count} count />
                     </div>
                   )}
-                  <div className="grid grid-cols-[34px_1fr_34px] items-center gap-x-2.5 gap-y-1 border-b border-line py-[9px] first:border-t sm:grid-cols-[34px_minmax(150px,220px)_1fr_auto_34px]">
+                  <div
+                    id={`pattern-${p.num}`}
+                    className={`grid scroll-mt-24 grid-cols-[34px_1fr_34px] items-center gap-x-2.5 gap-y-1 border-b border-line py-[9px] first:border-t sm:grid-cols-[34px_minmax(150px,220px)_1fr_auto_34px] ${focus === p.num ? "rounded-lg bg-accent-soft/60" : ""}`}
+                  >
                     <button
                       onClick={() => play(p)}
                       title={playing === p.num ? "Stop" : `Play ${p.name}`}
@@ -150,9 +189,12 @@ export default function StrummingPage() {
                     >
                       {playing === p.num ? <StopIcon /> : <PlayIcon />}
                     </button>
-                    <span className="text-[14.5px] font-[550]">
-                      <span className="mr-1.5 font-normal tabular-nums text-faint">{p.num}</span>
-                      {p.name}
+                    <span className="flex flex-wrap items-center gap-x-2.5 text-[14.5px] font-[550]">
+                      <span>
+                        <span className="mr-1.5 font-normal tabular-nums text-faint">{p.num}</span>
+                        {p.name}
+                      </span>
+                      <LevelPips level={progress.skills.get(`strum:${p.num}`)?.level ?? 0} />
                     </span>
                     <div className="col-span-2 col-start-2 row-start-2 sm:col-span-1 sm:col-start-auto sm:row-start-auto">
                       <Beats slots={p.slots} active={playing === p.num ? slot : undefined} />

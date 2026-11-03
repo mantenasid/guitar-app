@@ -4,8 +4,12 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { stopPlayback } from "@/audio/playback";
 import { db, localDate } from "@/progress/db";
 import { applyTheme, useSettings, type Theme } from "@/progress/settings";
+import { useProgress } from "@/progress/hooks";
+import { DAILY_XP_GOAL, playerLevel } from "@/skills/progress";
+import { Toasts } from "./Toasts";
 
 const LINKS = [
+  { to: "/path", label: "Path" },
   { to: "/chords", label: "Chords" },
   { to: "/transitions", label: "Transitions" },
   { to: "/strumming", label: "Strumming" },
@@ -47,6 +51,24 @@ function PracticeTimer() {
       <span className={`tabular-nums ${running ? "text-accent" : "text-ink"}`}>{formatDuration(seconds)}</span>
       <span className="hidden text-faint sm:inline">· {formatDuration(saved + seconds)} today</span>
     </button>
+  );
+}
+
+/** Player level, with a ring that fills towards today's XP goal. */
+function XpChip() {
+  const { xp, xpToday } = useProgress();
+  const { level } = playerLevel(xp);
+  const pct = Math.min(1, xpToday / DAILY_XP_GOAL);
+  const c = 2 * Math.PI * 8;
+  return (
+    <NavLink to="/path" title={`Level ${level} · ${xp} XP · ${xpToday}/${DAILY_XP_GOAL} XP today`} className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[13px] hover:bg-surface-2">
+      <svg viewBox="0 0 20 20" className="size-5 -rotate-90" aria-hidden="true">
+        <circle cx="10" cy="10" r="8" fill="none" stroke="var(--line-2)" strokeWidth="2.5" />
+        <circle cx="10" cy="10" r="8" fill="none" stroke={pct >= 1 ? "var(--good)" : "var(--accent)"} strokeWidth="2.5" strokeLinecap="round" strokeDasharray={`${pct * c} ${c}`} />
+      </svg>
+      <span className="font-[550] tabular-nums">Lv {level}</span>
+      <span className="hidden tabular-nums text-faint sm:inline">{xpToday}/{DAILY_XP_GOAL}</span>
+    </NavLink>
   );
 }
 
@@ -96,11 +118,13 @@ export function AppShell() {
           ))}
         </div>
         <div className="ml-auto flex items-center gap-1">
+          <XpChip />
           <PracticeTimer />
           <ThemeToggle />
         </div>
       </nav>
       <Outlet />
+      <Toasts />
     </div>
   );
 }

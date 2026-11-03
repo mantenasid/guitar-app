@@ -1,12 +1,33 @@
+import { useMemo } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { db, loadBests, localDate, type Attempt } from "./db";
+import { computeProgress, dailyPlan, type Progress } from "@/skills/progress";
+import { db, localDate, type Attempt, type Learned } from "./db";
 
-const EMPTY_MAP: ReadonlyMap<string, number> = new Map();
 const EMPTY_SET: ReadonlySet<string> = new Set();
+const NO_ATTEMPTS: Attempt[] = [];
+const NO_LEARNED: Learned[] = [];
 
-/** Best score per skill; updates live when a new attempt is saved. */
+/** Raw data the progress engine works from; updates live. */
+function useRecords() {
+  const attempts = useLiveQuery(() => db.attempts.toArray(), [], NO_ATTEMPTS);
+  const learned = useLiveQuery(() => db.learned.toArray(), [], NO_LEARNED);
+  return { attempts, learned };
+}
+
+/** Levels, XP, unlocks and bests for every skill. */
+export function useProgress(): Progress {
+  const { attempts, learned } = useRecords();
+  return useMemo(() => computeProgress(attempts, learned), [attempts, learned]);
+}
+
+/** Best value per skill (fastest time, or highest speed). */
 export function useBests(): ReadonlyMap<string, number> {
-  return useLiveQuery(loadBests, [], EMPTY_MAP);
+  return useProgress().bests;
+}
+
+export function useDailyPlan() {
+  const { attempts, learned } = useRecords();
+  return useMemo(() => dailyPlan(attempts, learned), [attempts, learned]);
 }
 
 export function useLearned(): ReadonlySet<string> {
@@ -36,10 +57,11 @@ export function usePracticeDays(days = 7) {
   }, [days], []);
 }
 
-/** Days in a row with some practice, counting back from today (or yesterday). */
+/** Days in a row with any practice (timer or a scored attempt), counting back from today or yesterday. */
 export function useStreak(runningToday: boolean): number {
   return useLiveQuery(async () => {
     const days = new Set((await db.practice.toArray()).filter(d => d.seconds > 0).map(d => d.date));
+    (await db.attempts.toArray()).forEach(a => days.add(a.date));
     if (runningToday) days.add(localDate());
     const d = new Date();
     if (!days.has(localDate(d))) d.setDate(d.getDate() - 1);

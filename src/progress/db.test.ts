@@ -1,19 +1,17 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { addPractice, db, loadBests, recordAttempt, setLearned } from "./db";
+import { addPractice, db, recordAttempt, setLearned } from "./db";
 
 beforeEach(async () => {
   await Promise.all([db.attempts.clear(), db.learned.clear(), db.practice.clear()]);
 });
 
 describe("progress db", () => {
-  it("keeps the best attempt per skill", async () => {
+  it("stores every attempt with its local date", async () => {
     await recordAttempt("change:A|D", 22);
     await recordAttempt("change:A|D", 31);
-    await recordAttempt("change:A|D", 27);
-    await recordAttempt("change:C|G", 12);
-    const bests = await loadBests();
-    expect(bests.get("change:A|D")).toBe(31);
-    expect(bests.get("change:C|G")).toBe(12);
+    const all = await db.attempts.where("skillId").equals("change:A|D").toArray();
+    expect(all.map(a => a.value)).toEqual([22, 31]);
+    expect(all[0]!.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 
   it("marks and unmarks learned skills", async () => {

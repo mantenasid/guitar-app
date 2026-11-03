@@ -127,6 +127,9 @@
 .stage.s1 { --stage: var(--s1); } .stage.s2 { --stage: var(--s2); } .stage.s3 { --stage: var(--s3); }
 .stage.s4 { --stage: var(--s4); } .stage.s5 { --stage: var(--s5); }
 
+@keyframes toast-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
+@keyframes pop { 0% { transform: scale(0.9); opacity: 0; } 60% { transform: scale(1.04); } 100% { transform: scale(1); opacity: 1; } }
+
 .no-scrollbar { scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 

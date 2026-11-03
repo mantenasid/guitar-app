@@ -4,6 +4,19 @@ Learn guitar through small, timed games: chords, chord changes (target: 80 clean
 
 Installable web app (PWA) that works offline. Progress is stored on the device.
 
+## How the game works
+
+Every skill is atomic and measured, with four levels:
+
+| Skill | Game | Levels 1 / 2 / 3 / 4 (mastered) |
+| --- | --- | --- |
+| Chord shape | Chord recall: time from name to clean shape | 3 / 2 / 1.5 / 1 s |
+| Chord change | One-minute changes | 20 / 40 / 60 / 80 a minute |
+| Strum pattern | Tempo challenge | 60 / 80 / 100 / 120 BPM |
+| Scale | Tempo challenge | 60 / 80 / 100 / 120 BPM |
+
+Reaching level 1 unlocks what comes next (the next chord, changes between chords you know, the next pattern or scale). Attempts earn XP, with bonuses for personal bests and level-ups. The home screen builds a daily plan from reviews that are due (spaced repetition), skills close to their next level, and new unlocks. All progress is worked out from saved attempts by pure functions in `src/skills/progress.ts`.
+
 ## Run it
 
 ```bash

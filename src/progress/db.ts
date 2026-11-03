@@ -54,12 +54,3 @@ export async function addPractice(seconds: number, date = localDate()) {
     await db.practice.put({ date, seconds: (day?.seconds ?? 0) + Math.round(seconds) });
   });
 }
-
-/** Best value per skill across all attempts. */
-export async function loadBests(): Promise<Map<string, number>> {
-  const bests = new Map<string, number>();
-  await db.attempts.each(a => {
-    if (a.value > (bests.get(a.skillId) ?? 0)) bests.set(a.skillId, a.value);
-  });
-  return bests;
-}
