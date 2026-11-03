@@ -12,8 +12,8 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["icon.svg"],
       manifest: {
-        name: "Guitar Practice",
-        short_name: "Guitar",
+        name: "Woodshed",
+        short_name: "Woodshed",
         description: "Learn guitar through small, timed games.",
         theme_color: "#18181b",
         background_color: "#fafaf9",

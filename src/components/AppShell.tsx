@@ -26,18 +26,22 @@ export function formatDuration(sec: number) {
   return h ? `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}` : `${m}:${String(s).padStart(2, "0")}`;
 }
 
-/** A guitar pick with a soft light across it, for the brand. */
-function PickMark() {
+/** A woodshed: a gable roof over a soundhole, strung, on a tile of warm wood. Same drawing as public/icon.svg. */
+function ShedMark() {
   return (
-    <svg viewBox="0 0 20 22" className="size-5" aria-hidden>
+    <svg viewBox="0 0 24 24" className="size-6 drop-shadow-sm" aria-hidden>
       <defs>
-        <linearGradient id="pick" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#fdba74" />
-          <stop offset="1" stopColor="#c2410c" />
+        <linearGradient id="shed-wood" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#d0925a" />
+          <stop offset="1" stopColor="#6b3f22" />
         </linearGradient>
       </defs>
-      <path d="M10 21C6 17 1 10.5 1 6.5 1 3 4.5 1 10 1s9 2 9 5.5C19 10.5 14 17 10 21Z" fill="url(#pick)" />
-      <path d="M5 5.5c1.5-1.3 3.4-1.8 6-1.6" stroke="white" strokeOpacity=".55" strokeWidth="1.3" strokeLinecap="round" fill="none" />
+      <rect width="24" height="24" rx="5.5" fill="url(#shed-wood)" />
+      {/* Grain. */}
+      <path d="M0 8.5q6 1.6 12 0t12 0M0 17.5q6 1.6 12 0t12 0" fill="none" stroke="#2a1a10" strokeOpacity=".18" strokeWidth=".6" />
+      <path d="M4.5 11 12 4.6l7.5 6.4" fill="none" stroke="#f6f1e4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="12" cy="15.2" r="4.2" fill="#2a1a10" stroke="#f6f1e4" strokeWidth="1.2" />
+      <path d="M10.6 10.6v10.2M12 10.2v10.6M13.4 10.6v10.2" stroke="#f6f1e4" strokeOpacity=".85" strokeWidth=".55" strokeLinecap="round" />
     </svg>
   );
 }
@@ -88,8 +92,8 @@ export function AppShell() {
     >
       <nav className={`mx-auto flex max-w-[1080px] flex-wrap items-center gap-x-6 rounded-2xl px-3 ${glassClass} sm:h-14 sm:flex-nowrap sm:pr-2.5 sm:pl-4`}>
         <NavLink to="/" className="flex h-12 items-center gap-2.5 whitespace-nowrap text-[15px] font-[650] tracking-[-0.01em] text-ink sm:h-auto">
-          <PickMark />
-          Guitar Practice
+          <ShedMark />
+          Woodshed
         </NavLink>
         <div className="no-scrollbar order-3 -mx-1 flex w-full gap-1 overflow-x-auto pb-2 sm:order-none sm:mx-0 sm:w-auto sm:flex-1 sm:justify-center sm:pb-0">
           {LINKS.map(l => (

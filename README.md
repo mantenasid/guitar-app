@@ -1,4 +1,4 @@
-# Guitar Practice
+# Woodshed
 
 Learn guitar through small, timed games: chords, chord changes (target: 80 clean changes a minute), strumming patterns and scales.
 
