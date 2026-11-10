@@ -13,6 +13,8 @@ interface PlaybackState {
 export const usePlayback = create<PlaybackState>(() => ({ activeId: null, lit: new Set() }));
 
 let timers: ReturnType<typeof setTimeout>[] = [];
+/** Everything the current playback has queued on the audio clock. */
+let sounding: guitar.Voice | null = null;
 
 function light(ids: string[], on: boolean) {
   usePlayback.setState(s => {
@@ -25,7 +27,16 @@ function light(ids: string[], on: boolean) {
 export function stopPlayback() {
   timers.forEach(clearTimeout);
   timers = [];
+  sounding?.stop();
+  sounding = null;
   usePlayback.setState({ activeId: null, lit: new Set() });
+}
+
+/** Stops what's playing, then runs `fn`; whatever it schedules is cut by the next `stopPlayback`. */
+export function playScheduled(fn: () => void) {
+  stopPlayback();
+  sounding = guitar.voice();
+  sounding.run(fn);
 }
 
 /** Run timed events; each lights its notes for `hold` seconds. */
@@ -34,8 +45,9 @@ function run(activeId: string, events: { at: number; notes: ShapeNote[]; hold: n
   usePlayback.setState({ activeId });
   const t0 = guitar.now() + 0.05;
   let end = 0;
+  sounding = guitar.voice();
   for (const e of events) {
-    e.sound(t0 + e.at);
+    sounding.run(() => e.sound(t0 + e.at));
     const ids = e.notes.map(n => litId(activeId, n));
     timers.push(setTimeout(() => light(ids, true), (0.05 + e.at) * 1000));
     timers.push(setTimeout(() => light(ids, false), (0.05 + e.at + e.hold) * 1000));

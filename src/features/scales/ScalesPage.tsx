@@ -56,7 +56,7 @@ function KeyList({ rows }: { rows: string[][] }) {
 export default function ScalesPage() {
   return (
     <>
-      <PageHeader title="Scales" lead="16 scales in the same order as Yousician. Open any scale for string-by-string steps.">
+      <PageHeader title="Scales" lead="16 scales, easiest first. Open one to walk through its notes with the mic, then take it up the tempo ladder.">
         <DiagramLegend extra="Blue note" />
       </PageHeader>
 

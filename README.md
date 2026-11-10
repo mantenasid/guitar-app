@@ -1,21 +1,27 @@
-# Guitar Practice
+# Woodshed
 
 Learn guitar through small, timed games: chords, chord changes (target: 80 clean changes a minute), strumming patterns and scales.
 
 Installable web app (PWA) that works offline. Progress is stored on the device.
 
-## How the game works
+## How it works
 
-Every skill is atomic and measured, with four levels:
+**Practice** builds a short session each day from your own progress: a warm-up, skills due for review (spaced repetition), the ones closest to their next level, and one new thing per area. A session walks you through them in order with a timer on each.
 
-| Skill | Game | Levels 1 / 2 / 3 / 4 (mastered) |
+**Gym** has every drill by area. Each skill is atomic and measured, with levels:
+
+| Skill | Drill | Levels |
 | --- | --- | --- |
-| Chord shape | Chord recall: time from name to clean shape | 3 / 2 / 1.5 / 1 s |
-| Chord change | One-minute changes | 20 / 40 / 60 / 80 a minute |
-| Strum pattern | Tempo challenge | 60 / 80 / 100 / 120 BPM |
-| Scale | Tempo challenge | 60 / 80 / 100 / 120 BPM |
+| Chord shape | Ring check (every string sounds), then chord recall: time from name to clean shape | 3 / 2 / 1.5 / 1 s |
+| Chord change | One-minute changes, counted by the mic | 40 / 60 / 80 a minute |
+| Strum, picking pattern, play-along | Tempo ladder | 60 / 80 / 100 / 120 BPM |
+| Warm-up, scale, arpeggio | Note walk (right notes, no tempo), then tempo ladder | 60 / 80 / 100 / 120 BPM |
+| Fretboard notes | Note finder | 10 / 20 / 30 / 40 a minute |
+| Ear | Ten-question quiz | 70 / 80 / 90 / 100% |
 
-Reaching level 1 unlocks what comes next (the next chord, changes between chords you know, the next pattern or scale). Attempts earn XP, with bonuses for personal bests and level-ups. The home screen builds a daily plan from reviews that are due (spaced repetition), skills close to their next level, and new unlocks. All progress is worked out from saved attempts by pure functions in `src/skills/progress.ts`.
+The **tempo ladder** is the core loop: play in time, and with the mic on the app checks how many of your notes landed (`landedScore` in `src/skills/timing.ts`). Land 80% and the tempo steps up 4 BPM by itself. Without a mic you mark a tempo clean yourself.
+
+Reaching level 1 unlocks what comes next. Attempts earn XP, with bonuses for personal bests and level-ups. All progress is worked out from saved attempts by pure functions in `src/skills/progress.ts`.
 
 ## Run it
 
@@ -25,6 +31,19 @@ pnpm dev        # http://localhost:5173
 pnpm test       # unit tests
 pnpm build      # typecheck + production build into dist/
 ```
+
+## Your progress
+
+Everything is saved on the device, in the browser's IndexedDB, the moment a drill is scored. There's no account and nothing is uploaded; the mic is analysed live and never recorded. Progress belongs to one browser on one device, so **Practice → Your progress → Back up** saves it to a file, and **Restore** merges a file back in (on a new device, or after clearing the browser). Restoring never removes anything already there.
+
+## Install it as an app
+
+Deploy the `dist` folder to any static host. `vercel.json` (Vercel) and `public/_redirects` (Netlify) send every address to the app. Then:
+
+- **iPhone:** open it in Safari, tap Share → Add to Home Screen.
+- **Android / Chrome / Edge:** use Install app in the browser menu.
+
+It opens full screen, works offline, and installed apps are far less likely to have their storage cleared by the browser.
 
 ## Stack
 

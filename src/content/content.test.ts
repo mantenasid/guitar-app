@@ -69,6 +69,16 @@ describe("transitions and strumming", () => {
     }
   });
 
+  it("each pair appears once, and rows with a root list it first", () => {
+    const seen = new Set<string>();
+    for (const sec of TRANSITION_SECTIONS) for (const row of sec.rows) for (const [a, b] of row.pairs) {
+      const key = [a, b].sort().join("|");
+      expect(seen.has(key), `${a} ↔ ${b} repeated`).toBe(false);
+      seen.add(key);
+      if (row.root) expect(a, `${row.label} ${a} ↔ ${b}`).toBe(row.root);
+    }
+  });
+
   it("every strum pattern lines up with its count", () => {
     expect(ALL_PATTERNS).toHaveLength(29);
     for (const p of ALL_PATTERNS) expect(p.slots.length, p.name).toBe(p.count.length);

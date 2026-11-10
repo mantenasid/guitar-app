@@ -1,8 +1,11 @@
-// Arpeggios: chord tones one at a time in movable shapes, with degrees on the neck, claimed at a tempo.
+// Arpeggios: chord tones one at a time in movable shapes, with degrees on the neck, played up a tempo ladder.
 import { useSearchParams } from "react-router";
 import { Fretboard } from "@/components/Fretboard";
-import { TempoChallenge } from "@/components/TempoChallenge";
-import { PageHeader, PlayButton, Tabs, cardClass } from "@/components/ui";
+import { ClickDrill } from "@/components/TempoDrill";
+import { DrillTip, DrillTitle, DrillWindow } from "@/components/DrillWindow";
+import { NoteWalk } from "@/components/NoteWalk";
+import { drillOptions } from "@/components/DrillTabs";
+import { PageHeader, PlayButton } from "@/components/ui";
 import { playSequence, toggle } from "@/audio/playback";
 import { ARPEGGIOS, ARPEGGIO_BY_ID, type ArpStep, type Arpeggio } from "@/content/arpeggios";
 import type { Dot, Shape } from "@/content/types";
@@ -40,34 +43,26 @@ export default function ArpeggiosPage() {
 
   return (
     <>
-      <PageHeader title="Arpeggios" lead="The notes of a chord, one at a time. Learn each shape with its degrees, then slide it up or down the neck for any key. Up to the top root and back down, then claim the tempo." />
-      <div className="mb-4">
-        <Tabs
-          value={a.id}
-          options={ARPEGGIOS.map(x => ({ value: x.id, label: progress.skills.get(`arp:${x.id}`)?.unlocked ? x.title : `🔒 ${x.title}` }))}
-          onChange={id => setParams({ arp: id })}
-        />
-      </div>
-
-      <div className={`${cardClass} min-w-0 p-5 sm:p-6`}>
-        <div className="mb-3.5">
-          <div className="text-base font-[620] tracking-[-0.01em]">
-            {a.title} <span className="font-normal text-muted">· shown as {a.chord}</span>
-          </div>
-          <div className="text-[13px] text-muted">{a.tag}</div>
-        </div>
+      <PageHeader title="Arpeggios" lead="The notes of a chord, one at a time. Learn each shape with its degrees, then slide it up or down the neck for any key. Up to the top root and back down, in time." />
+      <DrillWindow
+        value={a.id}
+        options={drillOptions(progress, ARPEGGIOS, x => `arp:${x.id}`)}
+        onChange={id => setParams({ arp: id })}
+        side={<ClickDrill key={a.id} skillId={playId} hint="One note per click, up to the top root and back down. Let each note stop as the next one sounds." />}
+      >
+        <DrillTitle title={a.title} sub={`Shown as ${a.chord} · ${a.tag} · ${a.steps.length} notes, up and back down`} />
         <div className="overflow-x-auto pb-1">
-          <Fretboard shape={shapeFor(a)} scope={playId} fluid className="max-w-[440px]" />
+          <Fretboard shape={shapeFor(a)} scope={playId} fluid className="mx-auto max-w-[560px]" />
         </div>
-        <div className="mt-1.5 flex items-center gap-1.5">
+        <div className="mt-3 flex flex-col items-center gap-3">
           <PlayButton playId={playId} onPlay={() => toggle(playId, () => playSequence(playId, a.steps.map(toNote), 0.32))} label="Hear it" title="Hear the arpeggio up and down" />
-          <span className="text-[12.5px] text-faint">{a.steps.length} notes, up and back down</span>
+          <NoteWalk key={a.id} notes={a.steps.map(toNote)} scope={playId} />
         </div>
-        <p className="mt-3 text-[14px] text-ink-2">{a.tip}</p>
+        <DrillTip>{a.tip}</DrillTip>
 
-        <div className="mt-4 grid gap-1 text-[12.5px] text-muted">
-          <span>Going up (fret, finger, degree)</span>
-          <div className="flex flex-wrap gap-x-4 gap-y-2 rounded-lg bg-surface-2 px-3 py-2.5">
+        <details className="mx-auto mt-5 max-w-[640px] text-[12.5px] text-muted">
+          <summary className="cursor-pointer text-center text-[13px] hover:text-ink">Going up, written out (fret, finger, degree)</summary>
+          <div className="mt-2 flex flex-wrap justify-center gap-x-4 gap-y-2 rounded-lg bg-surface-2 px-3 py-2.5">
             {runs(a.steps).map((r, i) => (
               <span key={i} className="inline-flex items-baseline gap-1.5">
                 <span className="text-[11.5px] text-faint">{STRING_NAMES[r.s]}</span>
@@ -83,12 +78,8 @@ export default function ArpeggiosPage() {
               </span>
             ))}
           </div>
-        </div>
-      </div>
-
-      <div className="mt-5">
-        <TempoChallenge key={a.id} skillId={playId} hint="One note per click, up to the top root and back down. Let each note stop as the next one sounds." />
-      </div>
+        </details>
+      </DrillWindow>
     </>
   );
 }

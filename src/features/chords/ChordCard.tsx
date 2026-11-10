@@ -52,6 +52,9 @@ export function ChordCard({ chord, skills }: { chord: Chord; skills: PairSkills 
       <Fretboard shape={chord.shape} scope={playId} />
       <div className="mt-1.5 flex items-center justify-between">
         <PlayButton playId={playId} onPlay={() => strumChord(chord, playId)} title={`Strum ${chord.name}`} />
+        <Link to={`/chords/ring?chord=${encodeURIComponent(chord.key)}`} viewTransition className="rounded-lg px-2 py-1.5 text-[12.5px] text-muted transition duration-200 ease-in-out hover:bg-surface-2 hover:text-ink">
+          Ring check
+        </Link>
         <TickButton skillId={`chord:${chord.key}`} />
       </div>
       <ChangeProgress chordKey={chord.key} skills={skills} />

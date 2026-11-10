@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
-import { ALL_CHORDS, CHORD_BY_KEY, TRANSITION_SECTIONS } from "@/content";
+import { CHORD_BY_KEY, TRANSITION_SECTIONS } from "@/content";
 import { Fretboard } from "@/components/Fretboard";
-import { PageHeader, PlayButton, Section, Sparkline, StageDot, TargetBar, cardClass } from "@/components/ui";
+import { PageHeader, PlayButton, Sparkline, StageDot, TargetBar, buttonClass } from "@/components/ui";
+import { DrillTitle, DrillWindow, STAGE, STRIP } from "@/components/DrillWindow";
+import type { DrillTab } from "@/components/DrillTabs";
 import { LevelPips } from "@/components/LevelPips";
 import { formatDuration } from "@/components/AppShell";
 import * as guitar from "@/audio/guitar";
@@ -13,7 +15,7 @@ import { useHistory, useProgress } from "@/progress/hooks";
 import { useSettings } from "@/progress/settings";
 import {
   ALL_PAIRS, CHANGE_LEVELS, DRILL_SECONDS, RECENT_DRILLS, STAGES, changeSkillId, drillFeedback, nextGoal, pairKey, pairProgress, stageOf,
-  suggestedPairs, summarise, type PairSkills,
+  summarise, type Pair, type PairSkills,
 } from "@/skills/changes";
 import { strumChord } from "@/features/chords/ChordCard";
 import { ChangeCounter } from "@/audio/listen/counter";
@@ -23,26 +25,6 @@ import { defaultSource } from "@/audio/listen/listener";
 import { recentTiming, timingId, timingScore } from "@/skills/timing";
 import { nearTwins } from "@/audio/listen/rivals";
 import { ListenPanel } from "@/components/ListenPanel";
-
-function PairChip({ a, b, text, skills, current, onPick }: { a: string; b: string; text: string; skills: PairSkills; current: boolean; onPick: (a: string, b: string) => void }) {
-  const p = pairProgress(skills, a, b);
-  const speed = p.current ?? 0;
-  const st = stageOf(p.level, p.attempts > 0);
-  return (
-    <button
-      type="button"
-      onClick={() => onPick(a, b)}
-      title={`${a} ↔ ${b}: ${st.name}${speed ? `, current speed ${speed}` : ""}`}
-      className={`inline-flex items-center gap-[7px] rounded-full border py-1 pr-[11px] pl-[9px] text-sm font-medium ${
-        current ? "border-ink ring-1 ring-ink" : p.level >= CHANGE_LEVELS.length ? "border-good bg-good-soft" : "border-line bg-surface hover:border-line-2"
-      }`}
-    >
-      <StageDot level={p.level} tried={p.attempts > 0} />
-      {text}
-      {speed > 0 && <b className="text-[12.5px] font-medium tabular-nums text-faint">{speed}</b>}
-    </button>
-  );
-}
 
 interface Run {
   a: string;
@@ -64,7 +46,7 @@ function playLatency(): number {
   return (ctx.outputLatency || 0) + ctx.baseLatency;
 }
 
-function Drill({ a, b, onPick, skills }: { a: string; b: string; onPick: (a: string, b: string) => void; skills: PairSkills }) {
+function Drill({ a, b, skills }: { a: string; b: string; skills: PairSkills }) {
   const [secs, setSecs] = useState(DRILL_SECONDS);
   const [phase, setPhase] = useState<Phase>("idle");
   const [primerLeft, setPrimerLeft] = useState(PRIMER_SECONDS);
@@ -212,14 +194,13 @@ function Drill({ a, b, onPick, skills }: { a: string; b: string; onPick: (a: str
     }, PRIMER_SECONDS * 1000));
   };
 
-  const chordOptions = ALL_CHORDS.map(c => <option key={c.key} value={c.key}>{c.key}</option>);
   const busy = phase !== "idle";
   const chordTile = (key: string) => {
     const c = CHORD_BY_KEY[key]!;
     const playId = `drill:${key}`;
     const hearing = listen.on && listen.heard === key;
     return (
-      <div className={`min-w-0 rounded-xl p-2 transition ${hearing ? "bg-good-soft ring-2 ring-good" : ""}`}>
+      <div className={`min-w-0 rounded-2xl p-3 transition duration-200 ease-in-out ${hearing ? "bg-good-soft ring-2 ring-good" : "bg-surface-2/40"}`}>
         <div className="mb-1.5 flex items-center justify-between text-[17px] font-[620] tracking-[-0.01em]">
           <span>
             {c.name}
@@ -227,75 +208,83 @@ function Drill({ a, b, onPick, skills }: { a: string; b: string; onPick: (a: str
           </span>
           <PlayButton playId={playId} onPlay={() => strumChord(c, playId)} title={`Strum ${c.name}`} />
         </div>
-        <Fretboard shape={c.shape} scope={playId} fluid className="max-w-[440px]" />
+        <Fretboard shape={c.shape} scope={playId} fluid />
       </div>
     );
   };
+  const stats: [string, string | number, string][] = [
+    ["Current speed", speed || "–", p.attempts && p.attempts < RECENT_DRILLS ? `from ${p.attempts} drill${p.attempts === 1 ? "" : "s"}` : `average of last ${RECENT_DRILLS}`],
+    ["Next level", nextLevel ?? "Done", nextLevel ? `level ${p.level + 1}` : "mastered"],
+    ["Goal today", goal || "–", "the pacer's speed"],
+    ["Timing", timing !== undefined ? `${timing}%` : "–", timing !== undefined ? "strums on the click" : "needs pacer and mic"],
+  ];
 
   return (
-    <section className={`${cardClass} no-print mb-14 p-4 sm:p-[22px]`}>
-      <div className="mb-[18px] flex flex-wrap items-center gap-2">
-        <select aria-label="First chord" value={a} disabled={busy} onChange={e => onPick(e.target.value, b)}>{chordOptions}</select>
-        <span className="text-faint">↔</span>
-        <select aria-label="Second chord" value={b} disabled={busy} onChange={e => onPick(a, e.target.value)}>{chordOptions}</select>
-        <select aria-label="Drill length" className="sm:ml-auto" value={secs} disabled={busy} onChange={e => { setSecs(+e.target.value); setLeft(+e.target.value); }}>
-          <option value={60}>1 minute</option>
-          <option value={30}>30 s warm-up</option>
-        </select>
+    <div className="no-print">
+      <div className={STAGE}>
+        <DrillTitle title={<>{a} <span className="text-muted">↔</span> {b}</>} sub="Switch back and forth for one minute. Every clean change counts." />
+        <div className="grid grid-cols-2 items-start gap-3 sm:gap-5">
+          {chordTile(chordA.key)}
+          {chordTile(chordB.key)}
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 items-start gap-3 sm:gap-6 lg:grid-cols-[1fr_1fr_260px]">
-        <div className="col-span-2 flex flex-col gap-2.5 lg:order-last lg:col-span-1">
-          {phase === "primer" ? (
-            <div className="flex flex-col items-center justify-center py-1 text-center">
-              <strong key={primerLeft} className="text-[56px] font-[650] leading-none tracking-[-0.04em] tabular-nums text-accent animate-[pop_0.25s_ease-out]">{primerLeft}</strong>
-              <small className="mt-1 text-[13px] text-muted">Get set: fret {a}, the minute starts on the high beep</small>
+      <div className={STRIP}>
+        <div className="mx-auto flex max-w-[820px] flex-col gap-5 px-5 py-6 sm:px-8 sm:py-7">
+          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 sm:justify-between">
+            <div className="w-[150px] text-center leading-none sm:text-left">
+              {phase === "primer" ? (
+                <>
+                  <strong key={primerLeft} className="block animate-[pop_0.25s_ease-out] text-[56px] font-[650] tracking-[-0.04em] tabular-nums text-accent">{primerLeft}</strong>
+                  <span className="text-[12px] text-muted">get set on {a}</span>
+                </>
+              ) : (
+                <>
+                  <strong key={bump} className={`block text-[56px] font-[650] tracking-[-0.04em] tabular-nums ${bump ? "animate-[pop_0.2s_ease-out]" : ""}`}>{run?.count ?? 0}</strong>
+                  <span className="text-[12px] text-muted">changes</span>
+                </>
+              )}
             </div>
-          ) : (
-            <div className="flex items-baseline justify-between">
-              <span>
-                <strong key={bump} className={`inline-block text-[56px] font-[650] leading-none tracking-[-0.04em] tabular-nums ${bump ? "animate-[pop_0.2s_ease-out]" : ""}`}>{run?.count ?? 0}</strong>
-                <small className="ml-1.5 text-[13px] text-muted">changes</small>
-              </span>
-              <span className="text-xl tabular-nums text-muted">{formatDuration(Math.max(0, Math.ceil(left)))}</span>
+
+            <button
+              type="button"
+              onClick={start}
+              className={`h-14 min-w-[200px] flex-1 rounded-full text-[16px] font-[600] transition duration-200 ease-in-out sm:max-w-[300px] ${busy ? "bg-accent-soft text-accent" : "bg-ink text-bg hover:opacity-90"}`}
+            >
+              {busy ? "Stop" : "Start"}
+            </button>
+
+            <div className="w-[150px] text-center leading-none sm:text-right">
+              <strong className="block text-[32px] font-[620] tracking-[-0.03em] tabular-nums text-ink-2">{formatDuration(Math.max(0, Math.ceil(left)))}</strong>
+              <span className="text-[12px] text-muted">{busy ? "left" : `${PRIMER_SECONDS} s to get set, then go`}</span>
+            </div>
+          </div>
+
+          {phase === "running" && !listen.on && (
+            <div className="flex justify-center gap-2">
+              <button type="button" onClick={() => add(1)} className={`${buttonClass.quiet} min-w-[180px]`}>
+                +1 <span className="text-muted">Space</span>
+              </button>
+              <button type="button" onClick={() => add(-1)} title="Take one back (Backspace)" className={buttonClass.quiet}>
+                −1
+              </button>
             </div>
           )}
-          <button onClick={start} className="w-full rounded-[10px] bg-ink py-[11px] text-[14.5px] font-medium text-bg hover:opacity-90">
-            {phase === "idle" ? `Start (${PRIMER_SECONDS} s to get set)` : "Stop"}
-          </button>
-          <div className="flex gap-1.5">
-            <button disabled={phase !== "running"} onClick={() => add(1)} className="flex-1 rounded-[9px] border border-line-2 bg-surface py-[7px] text-[13.5px] disabled:opacity-35">
-              +1 <span className="text-muted">Space</span>
-            </button>
-            <button disabled={phase !== "running"} onClick={() => add(-1)} title="Take one back (Backspace)" className="rounded-[9px] border border-line-2 bg-surface px-3.5 text-[13.5px] disabled:opacity-35">
-              −1
-            </button>
+
+          <p className="min-h-[1.4em] text-center text-[14.5px] font-[550] text-ink" aria-live="polite">
+            {result || (p.attempts ? "" : <span className="font-normal text-muted">Your first try sets a baseline. Levels go by the average of {RECENT_DRILLS} drills in a row.</span>)}
+          </p>
+
+          <div className="grid grid-cols-2 gap-x-4 gap-y-4 border-t border-line pt-5 sm:grid-cols-4">
+            {stats.map(([k, v, hint]) => (
+              <div key={k} className="flex flex-col">
+                <span className="text-[12px] text-muted">{k}</span>
+                <b className="text-[22px] font-[620] tracking-[-0.02em] tabular-nums">{v}</b>
+                <span className="text-[11.5px] text-faint">{hint}</span>
+              </div>
+            ))}
           </div>
-          <ListenPanel
-            listen={listen}
-            teachable={!twins}
-            hint={twins
-              ? `${a} and ${b} differ by one note, so every strum after "Go" counts as a change. Strum once per change.`
-              : "Each change counts once the new chord rings clearly. Re-strumming the same chord doesn't count."}
-          />
-          <label className="flex cursor-pointer items-center gap-2 text-[13px] text-muted">
-            <input type="checkbox" checked={pacer} onChange={e => setPacer(e.target.checked)} /> Pacer click at goal speed
-          </label>
-          <div className="flex flex-col gap-2 border-t border-line pt-3">
-            <div className="grid grid-cols-2 gap-x-1.5 gap-y-2.5">
-              {[
-                ["Current", speed || "–", p.attempts && p.attempts < RECENT_DRILLS ? `from ${p.attempts} drill${p.attempts === 1 ? "" : "s"}` : `last ${RECENT_DRILLS} avg`],
-                ["Timing", timing !== undefined ? `${timing}%` : "–", timing !== undefined ? "on the click" : "turn on pacer + mic"],
-                ["Goal", goal || "–", "pacer speed"],
-                ["Next level", nextLevel ?? "Done", nextLevel ? `level ${p.level + 1}` : "mastered"],
-              ].map(([k, v, note]) => (
-                <div key={k} className="flex flex-col">
-                  <span className="text-xs text-muted">{k}</span>
-                  <b className="text-lg font-semibold tabular-nums">{v}</b>
-                  <span className="text-[11.5px] text-faint">{note}</span>
-                </div>
-              ))}
-            </div>
+          <div className="flex flex-col gap-2">
             <TargetBar value={speed} level={p.level} />
             <div className="flex items-center justify-between text-[12.5px] text-muted">
               <span className="inline-flex items-center gap-1.5">
@@ -304,35 +293,42 @@ function Drill({ a, b, onPick, skills }: { a: string; b: string; onPick: (a: str
               </span>
               <Sparkline values={history} />
             </div>
-            <div className="min-h-[1.4em] text-[13.5px]">
-              {result || (p.attempts ? "" : `First try sets your baseline. Levels count the average of ${RECENT_DRILLS} drills in a row.`)}
+          </div>
+
+          <div className="grid gap-4 border-t border-line pt-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+            <ListenPanel
+              listen={listen}
+              teachable={!twins}
+              hint={twins
+                ? `${a} and ${b} differ by one note, so every strum after "Go" counts as a change. Strum once per change.`
+                : "Each change counts once the new chord rings clearly. Re-strumming the same chord doesn't count."}
+            />
+            <div className="flex flex-col gap-3 text-[13.5px] text-muted">
+              <label className="flex cursor-pointer items-center gap-2">
+                <input type="checkbox" checked={pacer} onChange={e => setPacer(e.target.checked)} /> Pacer click at goal speed
+              </label>
+              <select aria-label="Drill length" value={secs} disabled={busy} onChange={e => { setSecs(+e.target.value); setLeft(+e.target.value); }}>
+                <option value={60}>1 minute</option>
+                <option value={30}>30 s warm-up</option>
+              </select>
             </div>
           </div>
         </div>
-        {chordTile(chordA.key)}
-        {chordTile(chordB.key)}
       </div>
-
-      <NextUp skills={skills} a={a} b={b} onPick={onPick} />
-    </section>
+    </div>
   );
 }
 
-function NextUp({ skills, a, b, onPick }: { skills: PairSkills; a: string; b: string; onPick: (a: string, b: string) => void }) {
-  const sum = summarise(ALL_PAIRS, skills);
-  const next = suggestedPairs(skills, 3);
-  const current = pairKey(a, b);
-  return (
-    <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-line pt-4 text-[13.5px] text-muted">
-      <span>{next.length ? "Next up" : "Every pair is mastered."}</span>
-      {next.map(p => (
-        <PairChip key={p.key} a={p.a} b={p.b} text={`${p.a} ↔ ${p.b}`} skills={skills} current={p.key === current} onPick={onPick} />
-      ))}
-      <span className="w-full sm:ml-auto sm:w-auto">
-        {sum.mastered} of {sum.total} pairs mastered · average speed {sum.average}
-      </span>
-    </div>
-  );
+const SECTION_TITLE = new Map(TRANSITION_SECTIONS.map(sec => [sec.id, sec.title]));
+
+/** Every pair in learning order. A pair opens once the one before it reaches level 1; any pair you've already drilled stays open. */
+function pathOptions(skills: PairSkills): DrillTab<string>[] {
+  return ALL_PAIRS.map((p, i) => {
+    const prev = ALL_PAIRS[i - 1];
+    const own = pairProgress(skills, p.a, p.b);
+    const locked = !!prev && own.attempts === 0 && pairProgress(skills, prev.a, prev.b).level < 1;
+    return { value: p.key, label: `${p.a} ↔ ${p.b}`, locked, level: own.level, group: SECTION_TITLE.get(p.section) };
+  });
 }
 
 export default function TransitionsPage() {
@@ -341,58 +337,46 @@ export default function TransitionsPage() {
   const saved = useSettings(s => s.drillPair);
   const setSaved = useSettings(s => s.setDrillPair);
 
+  const options = pathOptions(skills);
+  const open = (key: string | undefined) => (key ? options.find(o => o.value === key && !o.locked) : undefined);
+  const byKey = (key: string) => ALL_PAIRS.find(p => p.key === key);
+  // The pair in the link, else the last one you drilled, else the furthest one open. A locked pair can't be opened.
   const fromUrl = params.get("pair")?.split("|");
-  const [a, b] = fromUrl && fromUrl.length === 2 && CHORD_BY_KEY[fromUrl[0]!] && CHORD_BY_KEY[fromUrl[1]!] ? (fromUrl as [string, string]) : saved;
+  const asked = fromUrl?.length === 2 ? pairKey(fromUrl[0]!, fromUrl[1]!) : undefined;
+  const chosen = open(asked) ?? open(pairKey(saved[0], saved[1])) ?? options.filter(o => !o.locked).at(-1)!;
+  const pair: Pair = byKey(chosen.value)!;
 
-  const pick = (x: string, y: string) => {
-    setSaved([x, y]);
-    setParams({ pair: `${x}|${y}` }, { replace: true });
-    document.getElementById("drill-top")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const pick = (key: string) => {
+    const p = byKey(key);
+    if (!p) return;
+    setSaved([p.a, p.b]);
+    setParams({ pair: `${p.a}|${p.b}` }, { replace: true });
   };
-  const current = pairKey(a, b);
+  const sum = summarise(ALL_PAIRS, skills);
 
   return (
     <>
-      <div id="drill-top" />
-      <PageHeader title="Transitions" lead={`Switch between two chords for one minute and count the clean changes. Your current speed is the average of your last ${RECENT_DRILLS} drills; hold an average of ${CHANGE_LEVELS.join(" / ")} for levels 1 / 2 / 3.`} />
-      <Drill a={a} b={b} onPick={pick} skills={skills} />
+      <PageHeader title="Transitions" lead={`One minute, two chords, as many clean changes as you can. Your speed is the average of your last ${RECENT_DRILLS} drills: ${CHANGE_LEVELS.join(", ")} a minute are levels 1, 2 and 3.`} />
+      <DrillWindow
+        value={pair.key}
+        options={options}
+        onChange={pick}
+        path
+        bare
+        unlockHint={`Average ${CHANGE_LEVELS[0]} changes a minute here to unlock the next pair.`}
+        footer={
+          <>
+            <span>
+              {sum.mastered} of {sum.total} pairs mastered
+            </span>
+            <span>Average speed {sum.average}</span>
+          </>
+        }
+      >
+        <Drill a={pair.a} b={pair.b} skills={skills} />
+      </DrillWindow>
 
-      {TRANSITION_SECTIONS.map((sec, i) => {
-        const pairs = ALL_PAIRS.filter(p => p.section === sec.id);
-        const sum = summarise(pairs, skills);
-        const lowest = Math.min(...pairs.map(p => pairProgress(skills, p.a, p.b).level));
-        return (
-          <Section
-            key={sec.id}
-            num={i + 1}
-            title={sec.title}
-            aside={
-              <span className="flex items-center gap-2.5 text-[13px] text-muted">
-                {sum.mastered} of {sum.total} mastered
-                <TargetBar value={sum.average} level={lowest} className="w-24" />
-              </span>
-            }
-          >
-            <div className="border-t border-line">
-              {sec.rows.map(row => (
-                <div key={row.label + row.pairs.join()} className="flex flex-col gap-2 border-b border-line px-0.5 py-[11px] sm:flex-row sm:gap-3.5">
-                  <div className="min-w-[116px] text-sm font-[550]">
-                    {row.label}
-                    {row.tag && <small className="block text-xs font-normal text-faint">{row.tag}</small>}
-                  </div>
-                  <div className="flex flex-1 flex-wrap gap-1.5">
-                    {row.pairs.map(([x, y]) => (
-                      <PairChip key={x + y} a={x} b={y} text={row.root ? y : `${x} ↔ ${y}`} skills={skills} current={pairKey(x, y) === current} onPick={pick} />
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Section>
-        );
-      })}
-
-      <div className="mt-10 flex flex-wrap gap-x-4 gap-y-1.5 text-[13px] text-muted">
+      <div className="mt-6 flex flex-wrap gap-x-4 gap-y-1.5 text-[13px] text-muted">
         {[...STAGES].reverse().map(s => (
           <span key={s.id} className="inline-flex items-center gap-1.5">
             <StageDot level={STAGES.indexOf(s) - 1} tried={s.id !== "s0"} /> {s.name}

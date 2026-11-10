@@ -1,7 +1,7 @@
 import type { ChordListen, ListenStatus } from "@/audio/listen/useChordListener";
 
 const STATUS_TEXT: Record<ListenStatus, string> = {
-  off: "Mic off: tap +1 / Space to count",
+  off: "Mic off: count with +1 or Space",
   starting: "Starting the microphone…",
   listening: "Listening",
   denied: "Microphone blocked. Allow it in the browser's site settings, then try again.",

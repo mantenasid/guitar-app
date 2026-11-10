@@ -3,7 +3,9 @@ import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 import { Fretboard } from "@/components/Fretboard";
 import { LevelPips } from "@/components/LevelPips";
-import { PageHeader, Tabs, cardClass } from "@/components/ui";
+import { DrillTitle, DrillWindow } from "@/components/DrillWindow";
+import { drillOptions } from "@/components/DrillTabs";
+import { PageHeader } from "@/components/ui";
 import { hzToNote } from "@/audio/listen/pitch";
 import { usePitch } from "@/audio/listen/useInput";
 import { NOTE_FRETS, NOTE_SETS, NOTE_SET_BY_ID } from "@/content/fretboard";
@@ -29,7 +31,9 @@ export default function FretboardPage() {
   const [params, setParams] = useSearchParams();
   const progress = useProgress();
   const unlocked = NOTE_SETS.filter(s => progress.skills.get(`note:${s.id}`)?.unlocked);
-  const set = NOTE_SET_BY_ID[params.get("set") ?? ""] ?? unlocked[unlocked.length - 1] ?? NOTE_SETS[0]!;
+  // A locked set can't be opened, even from a link; fall back to the furthest one you've reached.
+  const asked = NOTE_SET_BY_ID[params.get("set") ?? ""];
+  const set = (asked && unlocked.includes(asked) ? asked : unlocked.at(-1)) ?? NOTE_SETS[0]!;
   const skill = progress.skills.get(`note:${set.id}`);
 
   const [phase, setPhase] = useState<Phase>("ready");
@@ -98,78 +102,82 @@ export default function FretboardPage() {
   return (
     <>
       <PageHeader title="Note finder" lead="Name the highlighted note as many times as you can in a minute. Natural notes first, then sharps, then more strings." />
-      <div className="mb-4">
-        <Tabs
-          value={set.id}
-          options={NOTE_SETS.map(s => ({ value: s.id, label: progress.skills.get(`note:${s.id}`)?.unlocked ? s.title : `🔒 ${s.title}` }))}
-          onChange={id => {
-            setPhase("ready");
-            setSpot(null);
-            setParams({ set: id });
-          }}
-        />
-      </div>
-
-      <div className={`${cardClass} p-5 sm:p-6`}>
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex gap-6 text-[13.5px] text-muted">
-            <span>
-              <b className="text-2xl font-[650] tabular-nums text-ink">{left}</b> s
+      <DrillWindow
+        value={set.id}
+        options={drillOptions(progress, NOTE_SETS, s => `note:${s.id}`)}
+        onChange={id => {
+          setPhase("ready");
+          setSpot(null);
+          setParams({ set: id });
+        }}
+        path
+        unlockHint={`Name ${metric.levels[0]} notes in a minute here to unlock the next set.`}
+        footer={
+          <>
+            <span className="inline-flex items-center gap-2">
+              <LevelPips level={skill?.level ?? 0} /> {set.title}
             </span>
             <span>
-              <b className="text-2xl font-[650] tabular-nums text-good">{correct}</b> right
+              Best {skill?.best !== undefined ? formatValue("note", skill.best) : "–"} · levels at {metric.levels.join(" / ")} a minute
+            </span>
+          </>
+        }
+      >
+        <div>
+          <DrillTitle title={set.title} sub="Name the lit note. One minute on the clock." />
+          <div className="mb-5 flex justify-center gap-10 text-center text-[12.5px] text-muted">
+            <span>
+              <b className="block text-[36px] font-[650] leading-none tracking-[-0.03em] tabular-nums text-ink">{left}</b> seconds
             </span>
             <span>
-              <b className="text-2xl font-[650] tabular-nums text-ink-2">{wrong}</b> wrong
+              <b className="block text-[36px] font-[650] leading-none tracking-[-0.03em] tabular-nums text-good">{correct}</b> right
+            </span>
+            <span>
+              <b className="block text-[36px] font-[650] leading-none tracking-[-0.03em] tabular-nums text-ink-2">{wrong}</b> wrong
             </span>
           </div>
-          <label className="inline-flex items-center gap-2 text-[13.5px] text-muted">
-            <input type="checkbox" checked={byEar} onChange={e => setByEar(e.target.checked)} />
-            Answer by playing the note
-          </label>
-        </div>
 
-        <div className="overflow-x-auto">
-          <Fretboard shape={shapeFor(phase === "playing" ? spot : null)} scope="note-finder" />
-        </div>
+          <div className="overflow-x-auto">
+            <Fretboard shape={shapeFor(phase === "playing" ? spot : null)} scope="note-finder" />
+          </div>
 
-        {phase === "playing" ? (
-          <div className={`mt-5 grid grid-cols-4 gap-2 ${set.naturals ? "sm:grid-cols-7" : "sm:grid-cols-6"}`}>
-            {buttons.map(n => (
-              <button
-                key={n}
-                onClick={() => answer(n)}
-                className={`rounded-lg border px-3 py-2.5 text-[15px] font-[600] transition ${
-                  flash?.note === n ? (flash.ok ? "border-good bg-good-soft text-good" : "border-line-2 bg-surface-2 text-muted") : "border-line hover:border-line-2 hover:bg-surface-2"
-                }`}
-              >
-                {n}
+          {phase === "playing" ? (
+            <div className={`mt-6 grid grid-cols-4 gap-2 ${set.naturals ? "sm:grid-cols-7" : "sm:grid-cols-6"}`}>
+              {buttons.map(n => (
+                <button
+                  key={n}
+                  onClick={() => answer(n)}
+                  className={`rounded-xl border px-3 py-4 text-[18px] font-[600] transition duration-200 ease-in-out ${
+                    flash?.note === n
+                      ? flash.ok
+                        ? "border-good bg-good-soft text-good"
+                        : "border-line-2 bg-surface-2 text-muted"
+                      : "border-line hover:border-line-2 hover:bg-surface-2"
+                  }`}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-7 flex flex-col items-center gap-3">
+              {phase === "done" && (
+                <span className="text-[15px] font-[550] text-ink">
+                  {correct} right in a minute{wrong ? `, ${wrong} wrong` : ""}.
+                </span>
+              )}
+              <button onClick={start} className="h-14 w-full max-w-[300px] rounded-full bg-ink text-[16px] font-[600] text-bg transition duration-200 ease-in-out hover:opacity-90">
+                {phase === "done" ? "Go again" : "Start"}
               </button>
-            ))}
-          </div>
-        ) : (
-          <div className="mt-5 flex flex-wrap items-center gap-4">
-            <button onClick={start} className="rounded-lg bg-ink px-5 py-2.5 text-[15px] font-[600] text-bg">
-              {phase === "done" ? "Go again" : "Start"}
-            </button>
-            {phase === "done" && (
-              <span className="text-[14px] text-muted">
-                {correct} correct in a minute{wrong ? `, ${wrong} wrong` : ""}.
-              </span>
-            )}
-          </div>
-        )}
-        {byEar && phase === "playing" && status !== "listening" && <p className="mt-3 text-[13px] text-muted">Microphone: {status}</p>}
-
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-2 border-t border-line pt-4 text-[13px] text-muted">
-          <span className="inline-flex items-center gap-2">
-            <LevelPips level={skill?.level ?? 0} /> {set.title}
-          </span>
-          <span>
-            Best {skill?.best !== undefined ? formatValue("note", skill.best) : "–"} · levels at {metric.levels.join(" / ")} a minute
-          </span>
+              <label className="inline-flex cursor-pointer items-center gap-2 text-[13.5px] text-muted">
+                <input type="checkbox" checked={byEar} onChange={e => setByEar(e.target.checked)} />
+                Answer by playing the note on your guitar
+              </label>
+            </div>
+          )}
+          {byEar && phase === "playing" && status !== "listening" && <p className="mt-3 text-[13px] text-muted">Microphone: {status}</p>}
         </div>
-      </div>
+      </DrillWindow>
     </>
   );
 }

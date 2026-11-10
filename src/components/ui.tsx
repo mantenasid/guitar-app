@@ -22,10 +22,10 @@ export function StopIcon() {
 
 export function PageHeader({ title, lead, eyebrow, children, aside }: { title: ReactNode; lead?: ReactNode; eyebrow?: ReactNode; children?: ReactNode; aside?: ReactNode }) {
   return (
-    <header className="mb-9 flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+    <header className="mb-7 flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
       <div>
         {eyebrow && <div className="mb-2 text-[13px] text-muted">{eyebrow}</div>}
-        <h1 className="text-[26px] font-[650] leading-tight tracking-[-0.025em] sm:text-[30px]">{title}</h1>
+        <h1 className="font-brand text-[30px] font-[560] leading-tight tracking-[-0.02em] sm:text-[36px]">{title}</h1>
         {lead && <p className="mt-2 max-w-[62ch] text-[15px] text-muted">{lead}</p>}
         {children}
       </div>
@@ -49,6 +49,21 @@ export function Section({ id, num, title, note, aside, children }: { id?: string
     </section>
   );
 }
+
+/**
+ * Liquid glass: a thin tint that lets what is behind show through, blurred and with its colours lifted,
+ * with a bright rim along the top edge and light catching the top left.
+ */
+export const glassClass =
+  "border border-glass-rim/40 bg-glass bg-linear-to-br from-glass-rim/45 via-transparent to-transparent backdrop-blur-xl backdrop-saturate-[1.8] shadow-[inset_0_1px_0_var(--glass-rim),inset_0_-1px_0_rgb(255_255_255/0.06),0_12px_32px_-12px_rgb(30_40_30/0.35)]";
+
+/** The app's buttons: one filled main action, a quiet outlined one, and a green one for saving a result. */
+export const buttonClass = {
+  primary: "inline-flex items-center justify-center gap-2 rounded-[10px] bg-ink px-4 py-2.5 text-[14px] font-medium text-bg transition duration-200 ease-in-out hover:opacity-90 disabled:opacity-40",
+  quiet: "inline-flex items-center justify-center gap-2 rounded-[10px] border border-line-2 bg-surface px-4 py-2.5 text-[14px] font-medium text-ink transition duration-200 ease-in-out hover:border-faint disabled:opacity-40",
+  good: "inline-flex items-center justify-center gap-2 rounded-[10px] border border-good px-4 py-2.5 text-[14px] font-medium text-good transition duration-200 ease-in-out hover:bg-good-soft disabled:border-line-2 disabled:text-faint disabled:hover:bg-transparent",
+  active: "inline-flex items-center justify-center gap-2 rounded-[10px] bg-accent-soft px-4 py-2.5 text-[14px] font-medium text-accent transition duration-200 ease-in-out",
+} as const;
 
 export const cardClass = "block rounded-[14px] border border-line bg-surface shadow-card";
 

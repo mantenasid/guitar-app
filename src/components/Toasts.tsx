@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { AttemptScore } from "@/skills/progress";
+import { useSession } from "@/features/practice/session";
 import { maxLevel, type SkillKind } from "@/skills/registry";
 
 interface Toast {
@@ -30,8 +31,10 @@ export function celebrate(kind: SkillKind, skillTitle: string, score: AttemptSco
 
 export function Toasts() {
   const toasts = useToasts(s => s.toasts);
+  // Sit above the session bar while a session is running.
+  const lifted = useSession(s => s.startedAt !== null);
   return (
-    <div className="no-print pointer-events-none fixed inset-x-0 bottom-5 z-50 flex flex-col items-center gap-2 px-4" aria-live="polite">
+    <div className={`no-print pointer-events-none fixed inset-x-0 z-50 flex flex-col items-center gap-2 px-4 ${lifted ? "bottom-28" : "bottom-5"}`} aria-live="polite">
       {toasts.map(t => (
         <div
           key={t.id}

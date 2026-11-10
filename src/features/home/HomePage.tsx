@@ -1,156 +1,156 @@
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
-import { PageHeader, cardClass } from "@/components/ui";
-import { useRunningSeconds } from "@/components/AppShell";
-import { useDailyPlan, useLearned, usePracticeDays, useProgress, useStreak } from "@/progress/hooks";
-import { LevelPips } from "@/components/LevelPips";
-import { DAILY_XP_GOAL, type TaskReason } from "@/skills/progress";
-import { METRICS, formatValue, maxLevel } from "@/skills/registry";
-import { useSettings } from "@/progress/settings";
-import { ALL_PAIRS, CHANGE_LEVELS, CHANGE_TARGET, summarise } from "@/skills/changes";
-import { countByKind, type SkillKind } from "@/skills/registry";
+import { hit, type Drum } from "@/audio/drums";
+import { glassClass } from "@/components/ui";
+import { useDark } from "@/progress/settings";
+import day from "./day.webp";
+import studio from "./studio.webp";
 
-function greeting() {
-  const h = new Date().getHours();
-  return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+interface Pad {
+  drum: Drum;
+  label: string;
+  cx: number;
+  cy: number;
+  rx: number;
+  ry: number;
 }
 
-function Area({ to, title, blurb, progress, value }: { to: string; title: string; blurb: string; progress: React.ReactNode; value: number }) {
-  return (
-    <Link to={to} className={`${cardClass} flex min-h-[168px] flex-col gap-1.5 p-[22px] transition hover:-translate-y-px hover:border-line-2`}>
-      <h2 className="text-xl font-[620] tracking-[-0.015em]">{title}</h2>
-      <p className="flex-1 text-sm text-muted">{blurb}</p>
-      <div className="mt-2.5 text-[13px] text-muted">{progress}</div>
-      <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-surface-2">
-        <span className="block h-full rounded-full bg-good" style={{ width: `${Math.min(100, value * 100)}%` }} />
-      </div>
-    </Link>
-  );
+interface Scene {
+  src: string;
+  title: string;
+  /** The photo's size, in the SVG's units. */
+  w: number;
+  h: number;
+  /** How far across and down to keep in view when the screen crops the photo: the drum kit is on the right. */
+  focusX: number;
+  focusY: number;
+  /** Where each drum sits in the photo. Later pads are in front, so they win where they overlap. */
+  pads: Pad[];
 }
 
-function Week() {
-  const running = useSettings(s => s.timerStart !== null);
-  const runningSecs = useRunningSeconds();
-  const days = usePracticeDays(7).map((d, i, all) => (i === all.length - 1 ? { ...d, seconds: d.seconds + runningSecs } : d));
-  const streak = useStreak(running);
-  const total = days.reduce((a, d) => a + d.seconds, 0);
-  const max = Math.max(900, ...days.map(d => d.seconds));
-  return (
-    <div className={`${cardClass} mt-3.5 p-[22px]`}>
-      <div className="mb-[18px] flex flex-wrap items-baseline justify-between gap-1.5">
-        <h2 className="text-base font-[620]">This week</h2>
-        <span className="text-[13.5px] text-muted">
-          {Math.round(total / 60)} min practised · {streak} day streak
-        </span>
-      </div>
-      <div className="grid h-24 grid-cols-7 items-end gap-2.5">
-        {days.map((d, i) => (
-          <div key={d.date} className="flex h-full flex-col items-center justify-end gap-1.5">
-            <span className="min-h-[1em] text-[11.5px] tabular-nums text-muted">{d.seconds >= 60 ? `${Math.round(d.seconds / 60)}m` : ""}</span>
-            <span className={`w-full max-w-[34px] rounded-md ${d.seconds >= 60 ? "bg-ink" : "bg-surface-2"}`} style={{ height: Math.max(4, (d.seconds / max) * 64) }} />
-            <span className={`text-xs ${i === days.length - 1 ? "font-semibold text-ink" : "text-faint"}`}>{d.label}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+/** Fetch and decode both photos ahead of time, so coming home never flashes an empty frame before the picture lands. */
+export function preloadHomePhotos() {
+  for (const src of [studio, day]) {
+    const img = new Image();
+    img.src = src;
+    void img.decode().catch(() => {});
+  }
 }
 
-const REASON: Record<TaskReason, { label: string; cls: string }> = {
-  "warm-up": { label: "Warm up", cls: "bg-surface-2 text-ink-2" },
-  review: { label: "Review", cls: "bg-surface-2 text-ink-2" },
-  "level-up": { label: "Level up", cls: "bg-accent-soft text-accent" },
-  new: { label: "New", cls: "bg-good-soft text-good" },
+/** The studio at night for dark mode, and open to the hills by day for light mode. */
+const NIGHT: Scene = {
+  src: studio,
+  title: "A dark studio just after a session. Tap the drums to play them.",
+  w: 1024,
+  h: 1024,
+  focusX: 0.8,
+  focusY: 0.3,
+  pads: [
+    { drum: "kick", label: "Kick drum", cx: 655, cy: 675, rx: 50, ry: 64 },
+    { drum: "floorTom", label: "Floor tom", cx: 895, cy: 640, rx: 62, ry: 40 },
+    { drum: "rackTom", label: "Tom", cx: 716, cy: 565, rx: 46, ry: 30 },
+    { drum: "snare", label: "Snare", cx: 778, cy: 660, rx: 62, ry: 40 },
+    { drum: "splash", label: "Splash cymbal", cx: 919, cy: 506, rx: 62, ry: 17 },
+    { drum: "ride", label: "Ride cymbal", cx: 817, cy: 543, rx: 72, ry: 29 },
+    { drum: "crash", label: "Crash cymbal", cx: 636, cy: 490, rx: 66, ry: 19 },
+    { drum: "hihat", label: "Hi-hat", cx: 678, cy: 597, rx: 59, ry: 18 },
+  ],
 };
 
-function TodayPlan() {
-  const plan = useDailyPlan();
-  const { xpToday, skills } = useProgress();
-  const done = plan.filter(t => t.done).length;
-  const goalPct = Math.min(1, xpToday / DAILY_XP_GOAL);
-  return (
-    <div className={`${cardClass} mb-3.5 p-5 sm:p-[22px]`}>
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-[620] tracking-[-0.015em]">Today's plan</h2>
-          <p className="text-[13.5px] text-muted">
-            {done === plan.length && plan.length ? "All done. Great session!" : `${done} of ${plan.length} done · picked from what's due, what's close, and what's next`}
-          </p>
-        </div>
-        <div className="min-w-[180px] text-right">
-          <div className="text-[13px] text-muted">
-            <b className="font-semibold tabular-nums text-ink">{xpToday}</b> / {DAILY_XP_GOAL} XP today
-          </div>
-          <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface-2">
-            <span className={`block h-full rounded-full ${goalPct >= 1 ? "bg-good" : "bg-accent"}`} style={{ width: `${goalPct * 100}%` }} />
-          </div>
-        </div>
-      </div>
-      <div className="border-t border-line">
-        {plan.map(t => (
-          <Link key={t.skill.id} to={t.skill.href} className="group flex items-center gap-3 border-b border-line py-3 last:border-b-0">
-            <span className={`grid size-6 shrink-0 place-items-center rounded-full border-[1.5px] ${t.done ? "border-good bg-good text-white" : "border-line-2"}`}>
-              {t.done && (
-                <svg viewBox="0 0 16 16" className="size-3.5" aria-hidden="true">
-                  <path d="M4.5 8.2l2.3 2.3 4.7-4.9" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              )}
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className={`block truncate text-[15px] font-[550] ${t.done ? "text-muted line-through" : ""}`}>{t.skill.title}</span>
-              <span className="text-[12.5px] text-muted">
-                {METRICS[t.skill.kind].game}
-                {t.target !== undefined && ` · reach ${formatValue(t.skill.kind, t.target)}`}
-              </span>
-            </span>
-            <LevelPips level={skills.get(t.skill.id)?.level ?? t.level} max={maxLevel(t.skill.kind)} className="hidden sm:inline-flex" />
-            <span className={`rounded-full px-2 py-0.5 text-[11.5px] font-semibold ${REASON[t.reason].cls}`}>{REASON[t.reason].label}</span>
-            <span className="text-faint transition group-hover:translate-x-0.5 group-hover:text-ink">→</span>
-          </Link>
-        ))}
-      </div>
-      <div className="mt-3 text-[13px]">
-        <Link to="/path" className="font-medium text-muted hover:text-ink">See the whole path →</Link>
-      </div>
-    </div>
-  );
+const DAY: Scene = {
+  src: day,
+  title: "A studio open to green hills on a summer morning. Tap the drums to play them.",
+  w: 1376,
+  h: 768,
+  focusX: 0.75,
+  focusY: 0.5,
+  pads: [
+    { drum: "kick", label: "Kick drum", cx: 885, cy: 630, rx: 48, ry: 62 },
+    { drum: "rackTom", label: "Tom", cx: 935, cy: 540, rx: 46, ry: 38 },
+    { drum: "floorTom", label: "Floor tom", cx: 1120, cy: 615, rx: 60, ry: 55 },
+    { drum: "snare", label: "Snare", cx: 1010, cy: 598, rx: 60, ry: 36 },
+    { drum: "splash", label: "Splash cymbal", cx: 1155, cy: 472, rx: 62, ry: 14 },
+    { drum: "ride", label: "Ride cymbal", cx: 1040, cy: 500, rx: 70, ry: 20 },
+    { drum: "crash", label: "Crash cymbal", cx: 868, cy: 452, rx: 60, ry: 14 },
+    { drum: "hihat", label: "Hi-hat", cx: 925, cy: 530, rx: 55, ry: 12 },
+  ],
+};
+
+/** The part of the photo that covers a w×h box, like `object-fit: cover`. */
+function coverViewBox(scene: Scene, w: number, h: number) {
+  if (!w || !h) return `0 0 ${scene.w} ${scene.h}`;
+  if (w / h >= scene.w / scene.h) {
+    const vh = (scene.w * h) / w;
+    return `0 ${(scene.h - vh) * scene.focusY} ${scene.w} ${vh}`;
+  }
+  const vw = (scene.h * w) / h;
+  return `${(scene.w - vw) * scene.focusX} 0 ${vw} ${scene.h}`;
 }
 
 export function HomePage() {
-  const learned = useLearned();
-  const { skills } = useProgress();
-  const count = (kind: SkillKind) => [...learned].filter(id => id.startsWith(kind + ":")).length;
-  const changes = summarise(ALL_PAIRS, skills);
-  const learnedLine = (kind: SkillKind) => (
-    <>
-      <b className="font-[550] text-ink">{count(kind)}</b> of {countByKind(kind)} learned
-    </>
-  );
+  const ref = useRef<HTMLElement>(null);
+  const dark = useDark();
+  const scene = dark ? NIGHT : DAY;
+  const [size, setSize] = useState({ w: 0, h: 0 });
+  const [lit, setLit] = useState<Drum | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new ResizeObserver(([entry]) => entry && setSize({ w: entry.contentRect.width, h: entry.contentRect.height }));
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+      clearTimeout(timer.current);
+    };
+  }, []);
+
+  const play = (drum: Drum) => {
+    hit(drum);
+    setLit(drum);
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => setLit(null), 120);
+  };
 
   return (
-    <>
-      <PageHeader title={greeting()} lead="Work through today's plan. Every attempt earns XP; beat a level target to unlock what's next." />
-      <TodayPlan />
-      <div className="grid gap-3.5 sm:grid-cols-2">
-        <Area to="/chords" title="Chords" blurb="28 shapes: open, blues and power chords." progress={learnedLine("chord")} value={count("chord") / countByKind("chord")} />
-        <Area
-          to="/transitions"
-          title="Transitions"
-          blurb={`One-minute changes. Average ${CHANGE_LEVELS.join(" / ")} over three drills for levels 1 / 2 / 3.`}
-          progress={
-            changes.tried ? (
-              <>
-                <b className="font-[550] text-ink">{changes.mastered}</b> of {changes.total} pairs mastered · avg speed {changes.average}
-              </>
-            ) : (
-              `Target: ${CHANGE_TARGET} changes a minute`
-            )
-          }
-          value={changes.average / CHANGE_TARGET}
-        />
-        <Area to="/strumming" title="Strumming" blurb="29 patterns from steady downs to 16th-note grooves." progress={learnedLine("strum")} value={count("strum") / countByKind("strum")} />
-        <Area to="/scales" title="Scales" blurb="16 scales in Yousician order, from first position up." progress={learnedLine("scale")} value={count("scale") / countByKind("scale")} />
+    // Fills the whole screen; the app shell lays the nav over its top edge.
+    <section ref={ref} className="grid grid-rows-[minmax(0,1fr)] overflow-hidden bg-bg [grid-area:1/1]">
+      <svg viewBox={coverViewBox(scene, size.w, size.h)} preserveAspectRatio="xMaxYMid slice" className="block size-full [grid-area:1/1]">
+        <title>{scene.title}</title>
+        <image href={scene.src} width={scene.w} height={scene.h} />
+        {scene.pads.map(({ drum, label, ...shape }) => (
+          <ellipse
+            key={drum}
+            {...shape}
+            role="button"
+            tabIndex={0}
+            aria-label={label}
+            onPointerDown={() => play(drum)}
+            onKeyDown={e => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), play(drum))}
+            className={`cursor-pointer outline-none transition-[fill] duration-200 ease-in-out hover:fill-white/[0.07] focus-visible:fill-white/[0.1] ${lit === drum ? "fill-white/30" : "fill-transparent"}`}
+          />
+        ))}
+      </svg>
+      {/* At night, darken the edges and the top so the nav reads over the photo. By day, just a soft shade at the top so the bright
+       * window frames don't fight the logo. */}
+      {dark ? (
+        <>
+          <div className="pointer-events-none bg-[radial-gradient(ellipse_at_center,transparent_60%,rgb(0_0_0/0.7))] [grid-area:1/1]" />
+          <div className="pointer-events-none bg-gradient-to-b from-black/70 to-transparent to-[18%] [grid-area:1/1]" />
+        </>
+      ) : (
+        <div className="pointer-events-none bg-gradient-to-b from-black/35 to-transparent to-[22%] [grid-area:1/1]" />
+      )}
+      <div className="pointer-events-none flex items-end justify-center pb-[6vh] [grid-area:1/1]">
+        <Link
+          to="/practice"
+          viewTransition
+          className={`pointer-events-auto rounded-full px-6 py-2.5 text-[14.5px] font-[560] text-ink transition duration-200 ease-in-out hover:scale-[1.03] ${glassClass}`}
+        >
+          Start today's practice
+        </Link>
       </div>
-      <Week />
-    </>
+    </section>
   );
 }

@@ -46,6 +46,8 @@ export interface BarLoopOptions {
   click: boolean;
   /** Called when a slot starts sounding (-1 when the bar ends). */
   onSlot: (index: number) => void;
+  /** Called as each bar is scheduled, with the audio-clock time of every slot in it. */
+  onBar?: (times: number[]) => void;
 }
 
 /**
@@ -54,11 +56,12 @@ export interface BarLoopOptions {
  */
 export function startBarLoop<O extends BarLoopOptions>(count: string[], swing: boolean, getOptions: () => O, play: (i: number, when: number, o: O) => void) {
   const timers: ReturnType<typeof setTimeout>[] = [];
+  const v = guitar.voice();
   let countIn = true;
   let next = guitar.now() + 0.1;
   const { times, beats } = slotTimes(count, swing);
 
-  const scheduleBar = (barStart: number) => {
+  const scheduleBar = (barStart: number) => v.run(() => {
     const o = getOptions();
     const spb = 60 / o.bpm;
     const t = guitar.now();
@@ -66,6 +69,7 @@ export function startBarLoop<O extends BarLoopOptions>(count: string[], swing: b
       for (let b = 0; b < beats; b++) guitar.click({ when: barStart + b * spb, accent: b === 0 && !countIn });
     }
     if (!countIn) {
+      o.onBar?.(times.map(time => barStart + time * spb));
       times.forEach((time, i) => {
         const when = barStart + time * spb;
         play(i, when, o);
@@ -75,7 +79,7 @@ export function startBarLoop<O extends BarLoopOptions>(count: string[], swing: b
     }
     countIn = false;
     return barStart + beats * spb;
-  };
+  });
 
   next = scheduleBar(next);
   const interval = setInterval(() => {
@@ -87,6 +91,7 @@ export function startBarLoop<O extends BarLoopOptions>(count: string[], swing: b
   return function stop() {
     clearInterval(interval);
     timers.forEach(clearTimeout);
+    v.stop();
   };
 }
 
