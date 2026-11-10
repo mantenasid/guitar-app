@@ -31,13 +31,13 @@ export const METRICS: Record<SkillKind, Metric> = {
   // One-minute changes: clean switches per minute, averaged over three drills in a row.
   change: { unit: "/min", better: "higher", levels: CHANGE_LEVELS, game: "One-minute changes" },
   // Tempo challenge: cleanest tempo in BPM.
-  strum: { unit: "BPM", better: "higher", levels: [60, 80, 100, 120], game: "Tempo challenge" },
-  scale: { unit: "BPM", better: "higher", levels: [60, 80, 100, 120], game: "Tempo challenge" },
+  strum: { unit: "BPM", better: "higher", levels: [60, 80, 100, 120], game: "Tempo ladder" },
+  scale: { unit: "BPM", better: "higher", levels: [60, 80, 100, 120], game: "Tempo ladder" },
   // Note finder: notes named correctly in a one-minute round.
   note: { unit: "/min", better: "higher", levels: [10, 20, 30, 40], game: "Note finder" },
-  warmup: { unit: "BPM", better: "higher", levels: [60, 80, 100, 120], game: "Tempo challenge" },
-  pick: { unit: "BPM", better: "higher", levels: [60, 80, 100, 120], game: "Tempo challenge" },
-  arp: { unit: "BPM", better: "higher", levels: [60, 80, 100, 120], game: "Tempo challenge" },
+  warmup: { unit: "BPM", better: "higher", levels: [60, 80, 100, 120], game: "Tempo ladder" },
+  pick: { unit: "BPM", better: "higher", levels: [60, 80, 100, 120], game: "Tempo ladder" },
+  arp: { unit: "BPM", better: "higher", levels: [60, 80, 100, 120], game: "Tempo ladder" },
   // Ear quiz: percent right in a round of ten.
   ear: { unit: "%", better: "higher", levels: [70, 80, 90, 100], game: "Ear quiz" },
   // Play-along: cleanest tempo through the whole progression.

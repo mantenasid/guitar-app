@@ -33,3 +33,70 @@ export function recentTiming(values: readonly number[]): number | undefined {
   const last = values.slice(-TIMING_RECENT);
   return last.length ? Math.round(last.reduce((a, b) => a + b, 0) / last.length) : undefined;
 }
+
+/** A note within this many seconds of where it belongs counts as landed. */
+export const LAND_WINDOW = 0.07;
+/** Fewer expected notes than this and there's nothing to judge yet. */
+export const MIN_NOTES = 4;
+/** The steady lag between a note being due and the mic hearing it (speaker and mic delay), within these bounds. */
+const LAG_RANGE = [-0.04, 0.25] as const;
+
+const median = (values: number[]) => {
+  const sorted = [...values].sort((a, b) => a - b);
+  return sorted[Math.floor(sorted.length / 2)]!;
+};
+
+/** Nearest value in a sorted list. */
+function nearest(sorted: readonly number[], t: number): number {
+  let lo = 0;
+  let hi = sorted.length - 1;
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1;
+    if (sorted[mid]! <= t) lo = mid;
+    else hi = mid;
+  }
+  return Math.abs(sorted[lo]! - t) <= Math.abs(sorted[hi]! - t) ? sorted[lo]! : sorted[hi]!;
+}
+
+export interface Landed {
+  /** Percent of the notes that were due and landed, with stray extra notes counting against it. */
+  percent: number;
+  hit: number;
+  due: number;
+}
+
+/**
+ * How well what was heard matches the notes that were due. Speaker and mic delay push every
+ * heard note late by about the same amount, so that steady lag is measured from the playing
+ * itself and taken off first: only unsteady timing, missed notes and extra notes cost points.
+ */
+export function landedScore(heard: readonly number[], due: readonly number[], window = LAND_WINDOW): Landed | null {
+  if (due.length < MIN_NOTES) return null;
+  const grid = [...due].sort((a, b) => a - b);
+  if (!heard.length) return { percent: 0, hit: 0, due: grid.length };
+  const lag = Math.min(LAG_RANGE[1], Math.max(LAG_RANGE[0], median(heard.map(t => t - nearest(grid, t)))));
+  const notes = heard.map(t => t - lag).sort((a, b) => a - b);
+  let hit = 0;
+  let i = 0;
+  for (const t of grid) {
+    while (i < notes.length && notes[i]! < t - window) i++;
+    if (i < notes.length && notes[i]! <= t + window) {
+      hit++;
+      i++;
+    }
+  }
+  return { percent: Math.round((hit / Math.max(grid.length, notes.length)) * 100), hit, due: grid.length };
+}
+
+/** The grid with a note added halfway between each pair, for playing two notes to the click. */
+export function withHalves(due: readonly number[]): number[] {
+  const grid = [...due].sort((a, b) => a - b);
+  return grid.flatMap((t, i) => (i + 1 < grid.length ? [t, (t + grid[i + 1]!) / 2] : [t]));
+}
+
+/** Whether a heard pitch is the wanted note, in any octave: low strings are often heard an octave up. */
+export function sameNote(hz: number, midi: number, cents = 45): boolean {
+  const off = 1200 * Math.log2(hz / (440 * Math.pow(2, (midi - 69) / 12)));
+  const wrapped = ((off % 1200) + 1200) % 1200;
+  return Math.min(wrapped, 1200 - wrapped) <= cents;
+}

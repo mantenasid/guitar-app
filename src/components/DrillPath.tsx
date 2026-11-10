@@ -18,8 +18,8 @@ function Lock({ className = "size-3" }: { className?: string }) {
   );
 }
 
-/** One drill at a time along a path: only the drill in front of you is named, the ones ahead stay locked until you earn them,
- * and a row of dots shows how far along you are. Drills that share a group (a section) are counted and dotted together. */
+/** One drill at a time along a path: where you are in it, with the ones ahead locked until you earn them,
+ * and a row of dots showing how far along you are. The stage below names the drill. Drills that share a group (a section) are counted and dotted together. */
 export function DrillPath<T extends string>({ value, options, onChange, unlockHint = "Reach level 1 here to unlock the next drill." }: {
   value: T;
   options: DrillTab<T>[];
@@ -41,7 +41,7 @@ export function DrillPath<T extends string>({ value, options, onChange, unlockHi
   const arrow = "flex size-9 shrink-0 items-center justify-center rounded-full text-muted transition duration-200 ease-in-out hover:bg-surface-2 hover:text-ink disabled:pointer-events-none disabled:opacity-30";
 
   return (
-    <div onKeyDown={onKey} className="flex flex-col gap-1.5 px-1.5 py-2.5">
+    <div onKeyDown={onKey} className="flex flex-col gap-1.5 px-1.5 py-1.5">
       <div className="flex items-center gap-2">
         <button type="button" aria-label={prev ? `Back to ${prev.label}` : "Back"} disabled={!prev} onClick={() => go(prev)} className={arrow}>
           <Chevron dir="left" />
@@ -51,7 +51,6 @@ export function DrillPath<T extends string>({ value, options, onChange, unlockHi
             {current.group ? `${current.group} · ` : ""}
             {place + 1} of {group.length}
           </span>
-          <span key={value} className="animate-rise truncate text-[15px] font-[620] tracking-[-0.01em] text-ink">{current.label}</span>
           <div role="tablist" aria-label="Drills" className="flex flex-wrap items-center justify-center gap-1">
             {group.map(o => {
               const on = o.value === value;

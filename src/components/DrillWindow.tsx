@@ -3,23 +3,28 @@ import { DrillPath } from "./DrillPath";
 import { DrillTabs, type DrillTab } from "./DrillTabs";
 import { cardClass } from "./ui";
 
-/** One section of a drill window, with a small heading so each part reads on its own. */
-export function WindowPane({ title, aside, children, className = "" }: { title?: ReactNode; aside?: ReactNode; children: ReactNode; className?: string }) {
+/** The stage: a centred column with room around the one thing to play. */
+export const STAGE = "mx-auto min-w-0 max-w-[820px] px-5 py-8 sm:px-8 sm:py-10";
+/** The controls strip under the stage. */
+export const STRIP = "border-t border-line bg-surface-2/30";
+
+/** The name of the drill on the stage, centred over what you play. */
+export function DrillTitle({ title, sub }: { title: ReactNode; sub?: ReactNode }) {
   return (
-    <section className={`min-w-0 p-5 sm:p-6 ${className}`}>
-      {(title || aside) && (
-        <div className="mb-3.5 flex flex-wrap items-start justify-between gap-2">
-          {title && <div className="min-w-0">{title}</div>}
-          {aside}
-        </div>
-      )}
-      {children}
-    </section>
+    <div className="mb-6 text-center">
+      <h2 className="font-brand text-[26px] font-[560] leading-tight tracking-[-0.02em] sm:text-[30px]">{title}</h2>
+      {sub && <div className="mt-1 text-[14px] text-muted">{sub}</div>}
+    </div>
   );
 }
 
-/** A drill's whole workspace in one window: the drills run along the top as tabs, the chosen one fills the body,
- * and practice tools (metronome, tempo claim) get a pane of their own beside it. The body slides in from the side you moved to. */
+/** A line of coaching under the stage. */
+export function DrillTip({ children }: { children: ReactNode }) {
+  return <p className="mx-auto mt-6 max-w-[56ch] text-center text-[14.5px] text-ink-2">{children}</p>;
+}
+
+/** A drill's whole workspace, top to bottom: which drill you're on, a stage with the one thing to play, and the controls
+ * (tempo, start, score) in a strip under it. The stage slides in from the side you moved to. */
 export function DrillWindow<T extends string>({
   value,
   options,
@@ -29,18 +34,22 @@ export function DrillWindow<T extends string>({
   footer,
   path,
   unlockHint,
+  bare,
 }: {
   value: T;
   options: DrillTab<T>[];
   onChange: (v: T) => void;
   children: ReactNode;
+  /** The controls strip under the stage. */
   side?: ReactNode;
   footer?: ReactNode;
   /** Show one drill at a time along a path, with later drills locked until you earn them, instead of every drill as a tab. */
   path?: boolean;
   unlockHint?: string;
+  /** The drill lays out its own stage and controls strip. */
+  bare?: boolean;
 }) {
-  // Which way the body slides: from the right when you go to a later drill, from the left for an earlier one.
+  // Which way the stage slides: from the right when you go to a later drill, from the left for an earlier one.
   const prev = useRef(value);
   const dir = useRef<1 | -1>(1);
   if (prev.current !== value) {
@@ -55,12 +64,9 @@ export function DrillWindow<T extends string>({
         {path ? <DrillPath value={value} options={options} onChange={onChange} unlockHint={unlockHint} /> : <DrillTabs value={value} options={options} onChange={onChange} />}
       </div>
       <div className="overflow-hidden">
-        <div
-          key={value}
-          className={`grid motion-reduce:animate-none ${dir.current === 1 ? "animate-slide-next" : "animate-slide-prev"} ${side ? "lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]" : ""}`}
-        >
-          <div className="min-w-0">{children}</div>
-          {side && <div className="min-w-0 border-t border-line bg-surface-2/30 lg:border-t-0 lg:border-l">{side}</div>}
+        <div key={value} className={`motion-reduce:animate-none ${dir.current === 1 ? "animate-slide-next" : "animate-slide-prev"}`}>
+          {bare ? children : <div className={STAGE}>{children}</div>}
+          {side && <div className={STRIP}>{side}</div>}
         </div>
       </div>
       {footer && <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line px-5 py-3.5 text-[13px] text-muted sm:px-6">{footer}</div>}

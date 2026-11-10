@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { Shape } from "@/content/types";
 import { Fretboard } from "@/components/Fretboard";
+import { NoteWalk } from "@/components/NoteWalk";
 import { PlayButton, cardClass } from "@/components/ui";
 import { playSequence, toggle } from "@/audio/playback";
 import { scaleRun, stringSteps } from "@/music/shapes";
@@ -31,6 +32,9 @@ export function ShapePanel({ shape, title, subtitle, playId, steps = true, spell
       <div className="mt-1.5 flex items-center gap-1.5">
         <PlayButton playId={playId} onPlay={() => toggle(playId, () => playSequence(playId, scaleRun(shape)))} label="Play up & down" title="Play up and down" />
         <span className="text-[12.5px] text-faint">Tap any dot to hear it</span>
+      </div>
+      <div className="mt-3">
+        <NoteWalk notes={scaleRun(shape)} scope={playId} />
       </div>
 
       {steps && (

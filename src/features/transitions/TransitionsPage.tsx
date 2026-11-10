@@ -2,8 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 import { CHORD_BY_KEY, TRANSITION_SECTIONS } from "@/content";
 import { Fretboard } from "@/components/Fretboard";
-import { PageHeader, PlayButton, Sparkline, StageDot, TargetBar } from "@/components/ui";
-import { DrillWindow } from "@/components/DrillWindow";
+import { PageHeader, PlayButton, Sparkline, StageDot, TargetBar, buttonClass } from "@/components/ui";
+import { DrillTitle, DrillWindow, STAGE, STRIP } from "@/components/DrillWindow";
 import type { DrillTab } from "@/components/DrillTabs";
 import { LevelPips } from "@/components/LevelPips";
 import { formatDuration } from "@/components/AppShell";
@@ -200,7 +200,7 @@ function Drill({ a, b, skills }: { a: string; b: string; skills: PairSkills }) {
     const playId = `drill:${key}`;
     const hearing = listen.on && listen.heard === key;
     return (
-      <div className={`min-w-0 rounded-xl p-2 transition ${hearing ? "bg-good-soft ring-2 ring-good" : ""}`}>
+      <div className={`min-w-0 rounded-2xl p-3 transition duration-200 ease-in-out ${hearing ? "bg-good-soft ring-2 ring-good" : "bg-surface-2/40"}`}>
         <div className="mb-1.5 flex items-center justify-between text-[17px] font-[620] tracking-[-0.01em]">
           <span>
             {c.name}
@@ -208,71 +208,83 @@ function Drill({ a, b, skills }: { a: string; b: string; skills: PairSkills }) {
           </span>
           <PlayButton playId={playId} onPlay={() => strumChord(c, playId)} title={`Strum ${c.name}`} />
         </div>
-        <Fretboard shape={c.shape} scope={playId} fluid className="max-w-[440px]" />
+        <Fretboard shape={c.shape} scope={playId} fluid />
       </div>
     );
   };
+  const stats: [string, string | number, string][] = [
+    ["Current speed", speed || "–", p.attempts && p.attempts < RECENT_DRILLS ? `from ${p.attempts} drill${p.attempts === 1 ? "" : "s"}` : `average of last ${RECENT_DRILLS}`],
+    ["Next level", nextLevel ?? "Done", nextLevel ? `level ${p.level + 1}` : "mastered"],
+    ["Goal today", goal || "–", "the pacer's speed"],
+    ["Timing", timing !== undefined ? `${timing}%` : "–", timing !== undefined ? "strums on the click" : "needs pacer and mic"],
+  ];
 
   return (
-    <div className="no-print p-4 sm:p-[22px]">
-      <div className="grid grid-cols-2 items-start gap-3 sm:gap-6 lg:grid-cols-[1fr_1fr_260px]">
-        <div className="col-span-2 flex flex-col gap-2.5 lg:order-last lg:col-span-1">
-          {phase === "primer" ? (
-            <div className="flex flex-col items-center justify-center py-1 text-center">
-              <strong key={primerLeft} className="text-[56px] font-[650] leading-none tracking-[-0.04em] tabular-nums text-accent animate-[pop_0.25s_ease-out]">{primerLeft}</strong>
-              <small className="mt-1 text-[13px] text-muted">Get set: fret {a}, the minute starts on the high beep</small>
+    <div className="no-print">
+      <div className={STAGE}>
+        <DrillTitle title={<>{a} <span className="text-muted">↔</span> {b}</>} sub="Switch back and forth for one minute. Every clean change counts." />
+        <div className="grid grid-cols-2 items-start gap-3 sm:gap-5">
+          {chordTile(chordA.key)}
+          {chordTile(chordB.key)}
+        </div>
+      </div>
+
+      <div className={STRIP}>
+        <div className="mx-auto flex max-w-[820px] flex-col gap-5 px-5 py-6 sm:px-8 sm:py-7">
+          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 sm:justify-between">
+            <div className="w-[150px] text-center leading-none sm:text-left">
+              {phase === "primer" ? (
+                <>
+                  <strong key={primerLeft} className="block animate-[pop_0.25s_ease-out] text-[56px] font-[650] tracking-[-0.04em] tabular-nums text-accent">{primerLeft}</strong>
+                  <span className="text-[12px] text-muted">get set on {a}</span>
+                </>
+              ) : (
+                <>
+                  <strong key={bump} className={`block text-[56px] font-[650] tracking-[-0.04em] tabular-nums ${bump ? "animate-[pop_0.2s_ease-out]" : ""}`}>{run?.count ?? 0}</strong>
+                  <span className="text-[12px] text-muted">changes</span>
+                </>
+              )}
             </div>
-          ) : (
-            <div className="flex items-baseline justify-between">
-              <span>
-                <strong key={bump} className={`inline-block text-[56px] font-[650] leading-none tracking-[-0.04em] tabular-nums ${bump ? "animate-[pop_0.2s_ease-out]" : ""}`}>{run?.count ?? 0}</strong>
-                <small className="ml-1.5 text-[13px] text-muted">changes</small>
-              </span>
-              <span className="text-xl tabular-nums text-muted">{formatDuration(Math.max(0, Math.ceil(left)))}</span>
+
+            <button
+              type="button"
+              onClick={start}
+              className={`h-14 min-w-[200px] flex-1 rounded-full text-[16px] font-[600] transition duration-200 ease-in-out sm:max-w-[300px] ${busy ? "bg-accent-soft text-accent" : "bg-ink text-bg hover:opacity-90"}`}
+            >
+              {busy ? "Stop" : "Start"}
+            </button>
+
+            <div className="w-[150px] text-center leading-none sm:text-right">
+              <strong className="block text-[32px] font-[620] tracking-[-0.03em] tabular-nums text-ink-2">{formatDuration(Math.max(0, Math.ceil(left)))}</strong>
+              <span className="text-[12px] text-muted">{busy ? "left" : `${PRIMER_SECONDS} s to get set, then go`}</span>
+            </div>
+          </div>
+
+          {phase === "running" && !listen.on && (
+            <div className="flex justify-center gap-2">
+              <button type="button" onClick={() => add(1)} className={`${buttonClass.quiet} min-w-[180px]`}>
+                +1 <span className="text-muted">Space</span>
+              </button>
+              <button type="button" onClick={() => add(-1)} title="Take one back (Backspace)" className={buttonClass.quiet}>
+                −1
+              </button>
             </div>
           )}
-          <button onClick={start} className="w-full rounded-[10px] bg-ink py-[11px] text-[14.5px] font-medium text-bg hover:opacity-90">
-            {phase === "idle" ? `Start (${PRIMER_SECONDS} s to get set)` : "Stop"}
-          </button>
-          <div className="flex gap-1.5">
-            <button disabled={phase !== "running"} onClick={() => add(1)} className="flex-1 rounded-[9px] border border-line-2 bg-surface py-[7px] text-[13.5px] disabled:opacity-35">
-              +1 <span className="text-muted">Space</span>
-            </button>
-            <button disabled={phase !== "running"} onClick={() => add(-1)} title="Take one back (Backspace)" className="rounded-[9px] border border-line-2 bg-surface px-3.5 text-[13.5px] disabled:opacity-35">
-              −1
-            </button>
+
+          <p className="min-h-[1.4em] text-center text-[14.5px] font-[550] text-ink" aria-live="polite">
+            {result || (p.attempts ? "" : <span className="font-normal text-muted">Your first try sets a baseline. Levels go by the average of {RECENT_DRILLS} drills in a row.</span>)}
+          </p>
+
+          <div className="grid grid-cols-2 gap-x-4 gap-y-4 border-t border-line pt-5 sm:grid-cols-4">
+            {stats.map(([k, v, hint]) => (
+              <div key={k} className="flex flex-col">
+                <span className="text-[12px] text-muted">{k}</span>
+                <b className="text-[22px] font-[620] tracking-[-0.02em] tabular-nums">{v}</b>
+                <span className="text-[11.5px] text-faint">{hint}</span>
+              </div>
+            ))}
           </div>
-          <ListenPanel
-            listen={listen}
-            teachable={!twins}
-            hint={twins
-              ? `${a} and ${b} differ by one note, so every strum after "Go" counts as a change. Strum once per change.`
-              : "Each change counts once the new chord rings clearly. Re-strumming the same chord doesn't count."}
-          />
-          <div className="flex flex-wrap items-center justify-between gap-2 text-[13px] text-muted">
-            <label className="flex cursor-pointer items-center gap-2">
-              <input type="checkbox" checked={pacer} onChange={e => setPacer(e.target.checked)} /> Pacer click at goal speed
-            </label>
-            <select aria-label="Drill length" value={secs} disabled={busy} onChange={e => { setSecs(+e.target.value); setLeft(+e.target.value); }}>
-              <option value={60}>1 minute</option>
-              <option value={30}>30 s warm-up</option>
-            </select>
-          </div>
-          <div className="flex flex-col gap-2 border-t border-line pt-3">
-            <div className="grid grid-cols-2 gap-x-1.5 gap-y-2.5">
-              {[
-                ["Current", speed || "–", p.attempts && p.attempts < RECENT_DRILLS ? `from ${p.attempts} drill${p.attempts === 1 ? "" : "s"}` : `last ${RECENT_DRILLS} avg`],
-                ["Timing", timing !== undefined ? `${timing}%` : "–", timing !== undefined ? "on the click" : "turn on pacer + mic"],
-                ["Goal", goal || "–", "pacer speed"],
-                ["Next level", nextLevel ?? "Done", nextLevel ? `level ${p.level + 1}` : "mastered"],
-              ].map(([k, v, note]) => (
-                <div key={k} className="flex flex-col">
-                  <span className="text-xs text-muted">{k}</span>
-                  <b className="text-lg font-semibold tabular-nums">{v}</b>
-                  <span className="text-[11.5px] text-faint">{note}</span>
-                </div>
-              ))}
-            </div>
+          <div className="flex flex-col gap-2">
             <TargetBar value={speed} level={p.level} />
             <div className="flex items-center justify-between text-[12.5px] text-muted">
               <span className="inline-flex items-center gap-1.5">
@@ -281,13 +293,27 @@ function Drill({ a, b, skills }: { a: string; b: string; skills: PairSkills }) {
               </span>
               <Sparkline values={history} />
             </div>
-            <div className="min-h-[1.4em] text-[13.5px]">
-              {result || (p.attempts ? "" : `First try sets your baseline. Levels count the average of ${RECENT_DRILLS} drills in a row.`)}
+          </div>
+
+          <div className="grid gap-4 border-t border-line pt-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+            <ListenPanel
+              listen={listen}
+              teachable={!twins}
+              hint={twins
+                ? `${a} and ${b} differ by one note, so every strum after "Go" counts as a change. Strum once per change.`
+                : "Each change counts once the new chord rings clearly. Re-strumming the same chord doesn't count."}
+            />
+            <div className="flex flex-col gap-3 text-[13.5px] text-muted">
+              <label className="flex cursor-pointer items-center gap-2">
+                <input type="checkbox" checked={pacer} onChange={e => setPacer(e.target.checked)} /> Pacer click at goal speed
+              </label>
+              <select aria-label="Drill length" value={secs} disabled={busy} onChange={e => { setSecs(+e.target.value); setLeft(+e.target.value); }}>
+                <option value={60}>1 minute</option>
+                <option value={30}>30 s warm-up</option>
+              </select>
             </div>
           </div>
         </div>
-        {chordTile(chordA.key)}
-        {chordTile(chordB.key)}
       </div>
     </div>
   );
@@ -330,12 +356,13 @@ export default function TransitionsPage() {
 
   return (
     <>
-      <PageHeader title="Transitions" lead={`Switch between two chords for one minute and count the clean changes. Your current speed is the average of your last ${RECENT_DRILLS} drills; hold an average of ${CHANGE_LEVELS.join(" / ")} for levels 1 / 2 / 3.`} />
+      <PageHeader title="Transitions" lead={`One minute, two chords, as many clean changes as you can. Your speed is the average of your last ${RECENT_DRILLS} drills: ${CHANGE_LEVELS.join(", ")} a minute are levels 1, 2 and 3.`} />
       <DrillWindow
         value={pair.key}
         options={options}
         onChange={pick}
         path
+        bare
         unlockHint={`Average ${CHANGE_LEVELS[0]} changes a minute here to unlock the next pair.`}
         footer={
           <>

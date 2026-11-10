@@ -1,8 +1,9 @@
-// Warm-ups: finger independence and stretch, played one note per click and claimed at a tempo.
+// Warm-ups: finger independence and stretch, played one note per click up a tempo ladder.
 import { useSearchParams } from "react-router";
 import { Fretboard } from "@/components/Fretboard";
-import { TempoChallenge } from "@/components/TempoChallenge";
-import { DrillWindow } from "@/components/DrillWindow";
+import { ClickDrill } from "@/components/TempoDrill";
+import { DrillTip, DrillTitle, DrillWindow } from "@/components/DrillWindow";
+import { NoteWalk } from "@/components/NoteWalk";
 import { drillOptions } from "@/components/DrillTabs";
 import { PageHeader, PlayButton } from "@/components/ui";
 import { playSequence, toggle } from "@/audio/playback";
@@ -42,32 +43,28 @@ export default function WarmupsPage() {
 
   return (
     <>
-      <PageHeader title="Warm-ups" lead="A few minutes before you practise. Each finger gets its own fret, so the weak ones catch up. Go slow and clean, then claim the tempo." />
+      <PageHeader title="Warm-ups" lead="A few minutes before you practise. Each finger gets its own fret, so the weak ones catch up. Go slow and clean, and let the tempo climb." />
       <DrillWindow
         value={w.id}
         options={drillOptions(progress, WARMUPS, x => `warmup:${x.id}`)}
         onChange={id => setParams({ ex: id })}
         path
-        unlockHint="Claim this warm-up at any tempo to unlock the next one."
-        side={<TempoChallenge key={w.id} bare skillId={playId} hint="One note per click, every note clean and ringing. Lift each finger only when the next one lands." />}
+        unlockHint="Pass 60 BPM here to unlock the next warm-up."
+        side={<ClickDrill key={w.id} skillId={playId} hint="One note per click, every note clean and ringing. Lift each finger only when the next one lands." />}
       >
-        <div className="p-5 sm:p-6">
-        <div className="mb-3.5">
-          <div className="text-base font-[620] tracking-[-0.01em]">{w.title}</div>
-          <div className="text-[13px] text-muted">{w.tag}</div>
-        </div>
+        <DrillTitle title={w.title} sub={`${w.tag} · ${w.steps.length} notes, one per click`} />
         <div className="overflow-x-auto pb-1">
-          <Fretboard shape={shapeFor(w)} scope={playId} fluid className={w.frets > 6 ? "" : "max-w-[440px]"} />
+          <Fretboard shape={shapeFor(w)} scope={playId} fluid className={`mx-auto ${w.frets > 6 ? "" : "max-w-[560px]"}`} />
         </div>
-        <div className="mt-1.5 flex items-center gap-1.5">
+        <div className="mt-3 flex flex-col items-center gap-3">
           <PlayButton playId={playId} onPlay={() => toggle(playId, () => playSequence(playId, w.steps.map(toNote), 0.32))} label="Hear it" title="Hear the exercise" />
-          <span className="text-[12.5px] text-faint">{w.steps.length} notes, one per click</span>
+          <NoteWalk key={w.id} notes={w.steps.map(toNote)} scope={playId} />
         </div>
-        <p className="mt-3 text-[14px] text-ink-2">{w.tip}</p>
+        <DrillTip>{w.tip}</DrillTip>
 
-        <div className="mt-4 grid gap-1 text-[12.5px] text-muted">
-          <span>Order (fret, finger underneath)</span>
-          <div className="flex flex-wrap gap-x-4 gap-y-2 rounded-lg bg-surface-2 px-3 py-2.5">
+        <details className="mx-auto mt-5 max-w-[640px] text-[12.5px] text-muted">
+          <summary className="cursor-pointer text-center text-[13px] hover:text-ink">The order, written out</summary>
+          <div className="mt-2 flex flex-wrap justify-center gap-x-4 gap-y-2 rounded-lg bg-surface-2 px-3 py-2.5">
             {runs(w.steps).map((r, i) => (
               <span key={i} className="inline-flex items-baseline gap-1.5">
                 <span className="text-[11.5px] text-faint">{STRING_NAMES[r.s]}</span>
@@ -82,8 +79,7 @@ export default function WarmupsPage() {
               </span>
             ))}
           </div>
-        </div>
-        </div>
+        </details>
       </DrillWindow>
     </>
   );

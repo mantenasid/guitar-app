@@ -164,7 +164,7 @@ export default function RecallGame() {
         lead="Take your hand off the neck. When a chord name appears, form the shape and strum it. With the mic on it's hands-free; without it, tap the moment every finger is down."
       />
 
-      <div className={`${cardClass} mx-auto max-w-[640px] p-5 sm:p-8`}>
+      <div className={`${cardClass} mx-auto max-w-[720px] p-5 sm:p-8`}>
         <div className="mb-6 flex items-center justify-between text-[13px] text-muted">
           <span>
             Round {Math.min(index + 1, ROUNDS)} of {ROUNDS}
@@ -180,9 +180,23 @@ export default function RecallGame() {
         <div className="flex min-h-[300px] flex-col items-center justify-center gap-5 text-center">
           {phase === "ready" && (
             <>
-              {heardNote && <p className="font-medium text-good">✓ {heardNote}</p>}
+              {heardNote && <p className="font-medium text-good">{heardNote}</p>}
+              {/* A chord you haven't timed yet: look at the shape before the clock starts. */}
+              {index === 0 && chord && focus && !skillProgress?.attempts && (
+                <div className="w-full max-w-[320px]">
+                  <div className="mb-1 text-[17px] font-[620] tracking-[-0.01em]">{chord.name}</div>
+                  <Fretboard shape={chord.shape} scope="recall" fluid />
+                  <PlayButton playId="recall" onPlay={() => strumChord(chord, "recall")} label="Hear it" title="Strum the chord" />
+                  <p className="mt-1 text-[13px] text-muted">
+                    Learn the shape first: put each finger down and strum.{" "}
+                    <Link to={`/chords/ring?chord=${encodeURIComponent(chord.key)}`} viewTransition className="text-ink underline decoration-line-2 underline-offset-4 hover:decoration-ink">
+                      Check every string rings
+                    </Link>
+                  </p>
+                </div>
+              )}
               <p className="text-muted">{index === 0 ? "Hands off the neck, ready?" : listen.on ? "Next chord coming up…" : "Shake your hand out, then go again."}</p>
-              <button onClick={begin} className="rounded-xl bg-ink px-8 py-3 text-[15px] font-medium text-bg hover:opacity-90">
+              <button onClick={begin} className="h-14 w-full max-w-[300px] rounded-full bg-ink text-[16px] font-[600] text-bg transition duration-200 ease-in-out hover:opacity-90">
                 {index === 0 ? "Start" : "Next chord"} <span className="ml-1 opacity-60">Space</span>
               </button>
             </>
@@ -192,11 +206,11 @@ export default function RecallGame() {
 
           {phase === "go" && chord && (
             <>
-              <div className="text-[72px] font-[650] leading-none tracking-[-0.04em] animate-[pop_0.2s_ease-out]">{chord.key}</div>
+              <div className="font-brand text-[96px] font-[600] leading-none tracking-[-0.03em] animate-[pop_0.2s_ease-out]">{chord.key}</div>
               <div className="text-sm text-muted">{chord.name}</div>
               <div className="font-mono text-xl tabular-nums text-muted">{elapsed.toFixed(1)} s</div>
               {listen.on && <div className="text-[13px] text-muted">{listen.heard === key ? "Hearing it…" : "Strum when your fingers are down"}</div>}
-              <button onClick={gotIt} className="rounded-xl bg-accent px-10 py-4 text-[16px] font-semibold text-white hover:opacity-90">
+              <button onClick={gotIt} className="h-14 w-full max-w-[300px] rounded-full bg-accent text-[16px] font-[600] text-white transition duration-200 ease-in-out hover:opacity-90">
                 Got it <span className="ml-1 opacity-70">Space</span>
               </button>
             </>

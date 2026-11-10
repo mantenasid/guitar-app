@@ -144,10 +144,11 @@ export function HomePage() {
       )}
       <div className="pointer-events-none flex items-end justify-center pb-[6vh] [grid-area:1/1]">
         <Link
-          to="/gym"
-          className={`pointer-events-auto rounded-full px-5 py-2 text-[14px] font-[560] tracking-wide text-ink transition duration-200 ease-in-out hover:scale-[1.03] ${glassClass}`}
+          to="/practice"
+          viewTransition
+          className={`pointer-events-auto rounded-full px-6 py-2.5 text-[14.5px] font-[560] text-ink transition duration-200 ease-in-out hover:scale-[1.03] ${glassClass}`}
         >
-          Pick it up →
+          Start today's practice
         </Link>
       </div>
     </section>

@@ -1,7 +1,7 @@
 // Cover art for the gym's albums: an abstract motif for each practice area, drawn on a 100×100 square.
 import type { ReactNode } from "react";
 
-export type Art = "rings" | "inlays" | "picking" | "chordBox" | "barre" | "changes" | "strums" | "steps" | "arc" | "beams";
+export type Art = "rings" | "inlays" | "picking" | "chordBox" | "barre" | "changes" | "strums" | "steps" | "arc" | "beams" | "waves";
 
 export interface Palette {
   /** Tailwind gradient stops for the sleeve, dark at the top left to the colour at the bottom right. */
@@ -112,6 +112,14 @@ const ART: Record<Art, ReactNode> = {
         const y = (1 - t) ** 2 * 66 + 2 * (1 - t) * t * -6 + t ** 2 * 30;
         return <circle key={i} cx={x} cy={y} r={2 + i * 0.8} opacity={0.45 + t * 0.55} />;
       })}
+    </g>
+  ),
+  waves: (
+    <g fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round">
+      {range(5).map(i => (
+        <path key={i} d={`M${58 + i * 7} ${30 - i * 5} q${6 + i * 2} ${8 + i * 5} 0 ${16 + i * 10}`} opacity={1 - i * 0.17} />
+      ))}
+      <circle cx="48" cy="38" r="4" fill="currentColor" stroke="none" />
     </g>
   ),
   beams: (

@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 import { LevelPips } from "@/components/LevelPips";
-import { DrillWindow } from "@/components/DrillWindow";
+import { DrillTitle, DrillWindow } from "@/components/DrillWindow";
 import { drillOptions } from "@/components/DrillTabs";
 import { PageHeader } from "@/components/ui";
 import { now, strum } from "@/audio/guitar";
@@ -115,12 +115,9 @@ export default function EarPage() {
           </>
         }
       >
-        <div className="p-5 sm:p-6">
-          <div className="mb-4">
-            <div className="text-base font-[620] tracking-[-0.01em]">{stage.title}</div>
-            <div className="text-[13px] text-muted">{stage.id === "chords" ? `From ${poolKeys.join(", ")}` : stage.tag}</div>
-          </div>
-          <p className="text-[14px] text-ink-2">{stage.tip}</p>
+        <div className="mx-auto max-w-[560px]">
+          <DrillTitle title={stage.title} sub={stage.id === "chords" ? `From ${poolKeys.join(", ")}` : stage.tag} />
+          <p className="text-center text-[14.5px] text-ink-2">{stage.tip}</p>
 
           {phase === "playing" && q ? (
             <div className="mt-5">
@@ -132,12 +129,12 @@ export default function EarPage() {
                   onClick={() => playChords(q.chords)}
                   className="rounded-lg border border-line px-3 py-1.5 text-[13.5px] font-[560] transition hover:border-line-2 hover:bg-surface-2"
                 >
-                  ↻ Play again
+                  Play it again
                 </button>
               </div>
               <div className={`grid gap-2 ${q.choices.length > 4 ? "grid-cols-4" : q.choices.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
                 {q.choices.map(c => (
-                  <button key={c} onClick={() => answer(c)} disabled={!!picked} className={`rounded-lg border px-3 py-3 text-[15px] font-[600] transition ${choiceClass(c)}`}>
+                  <button key={c} onClick={() => answer(c)} disabled={!!picked} className={`rounded-xl border px-3 py-5 text-[17px] font-[600] transition duration-200 ease-in-out ${choiceClass(c)}`}>
                     {c}
                   </button>
                 ))}
@@ -159,14 +156,14 @@ export default function EarPage() {
               )}
             </div>
           ) : (
-            <div className="mt-5 flex flex-wrap items-center gap-4">
-              <button onClick={start} disabled={locked} className="rounded-lg bg-ink px-5 py-2.5 text-[15px] font-[600] text-bg disabled:opacity-40">
+            <div className="mt-7 flex flex-col items-center gap-3">
+              <button onClick={start} disabled={locked} className="h-14 w-full max-w-[300px] rounded-full bg-ink text-[16px] font-[600] text-bg transition duration-200 ease-in-out hover:opacity-90 disabled:opacity-40">
                 {phase === "done" ? "Go again" : "Start"}
               </button>
               {locked && <span className="text-[14px] text-muted">Score {METRICS.ear.levels[0]}% on the stage before to open this one.</span>}
               {phase === "done" && (
-                <span className="text-[14px] text-muted">
-                  {right} of {ROUND_LENGTH} right: {percent}%.
+                <span className="text-[15px] text-ink">
+                  {right} of {ROUND_LENGTH} right: <b className="font-[650]">{percent}%</b>
                 </span>
               )}
             </div>

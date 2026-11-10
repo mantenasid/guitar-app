@@ -97,7 +97,19 @@ export default function TunerPage() {
   }, [on]);
 
   return (
-    <div className="flex h-[calc(100svh-12rem)] min-h-[420px] flex-col gap-5">
+    <div className="flex h-[calc(100svh-12rem)] min-h-[420px] flex-col gap-4">
+      <div className="h-[62px] text-center" aria-live="polite">
+        {ringing !== null && cents !== null ? (
+          <>
+            <div className="font-brand text-[30px] font-[560] leading-none tracking-[-0.02em]">{STRING_NAMES[ringing]} string</div>
+            <div className={`mt-1.5 text-[14.5px] ${Math.abs(cents) <= IN_TUNE_CENTS ? "text-good" : "text-muted"}`}>
+              {Math.abs(cents) <= IN_TUNE_CENTS ? "In tune" : cents < 0 ? `${Math.round(-cents)} cents flat: tighten it` : `${Math.round(cents)} cents sharp: loosen it`}
+            </div>
+          </>
+        ) : (
+          <div className="pt-3 text-[14.5px] text-muted">{on ? "Pluck one string and let it ring." : "Six strings, low E on the left. Each turns gold when it's in tune."}</div>
+        )}
+      </div>
       <div className="flex min-h-0 flex-1 flex-col">
         <div className="h-2 rounded-full bg-line-2" aria-hidden />
         <div className="grid min-h-0 flex-1 grid-cols-6 gap-1 sm:gap-3">
@@ -106,12 +118,19 @@ export default function TunerPage() {
           ))}
         </div>
         <div className="h-2 rounded-full bg-line-2" aria-hidden />
+        <div className="mt-2 grid grid-cols-6 gap-1 text-center text-[13px] sm:gap-3">
+          {STRINGS.map(s => (
+            <span key={s} className={`transition-colors duration-200 ease-in-out ${ringing === s ? "font-semibold text-ink" : tuned.has(s) ? "text-good" : "text-faint"}`}>
+              {STRING_NAMES[s].replace(/^(Low|High) /, "")}
+            </span>
+          ))}
+        </div>
       </div>
 
       <div className="flex flex-col items-center gap-2">
         <button
           onClick={() => setOn(o => !o)}
-          className={`rounded-full px-6 py-2.5 text-[14px] font-medium transition duration-200 ease-in-out ${on ? "bg-accent-soft text-accent" : "bg-ink text-bg"}`}
+          className={`h-14 w-full max-w-[300px] rounded-full text-[16px] font-[600] transition duration-200 ease-in-out ${on ? "bg-accent-soft text-accent" : "bg-ink text-bg hover:opacity-90"}`}
         >
           {on ? "Stop listening" : "Start tuner"}
         </button>

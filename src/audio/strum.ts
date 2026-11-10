@@ -46,6 +46,8 @@ export interface BarLoopOptions {
   click: boolean;
   /** Called when a slot starts sounding (-1 when the bar ends). */
   onSlot: (index: number) => void;
+  /** Called as each bar is scheduled, with the audio-clock time of every slot in it. */
+  onBar?: (times: number[]) => void;
 }
 
 /**
@@ -67,6 +69,7 @@ export function startBarLoop<O extends BarLoopOptions>(count: string[], swing: b
       for (let b = 0; b < beats; b++) guitar.click({ when: barStart + b * spb, accent: b === 0 && !countIn });
     }
     if (!countIn) {
+      o.onBar?.(times.map(time => barStart + time * spb));
       times.forEach((time, i) => {
         const when = barStart + time * spb;
         play(i, when, o);

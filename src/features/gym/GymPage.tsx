@@ -53,6 +53,11 @@ const GYM_SECTIONS: { title: string; note: string; areas: Area[] }[] = [
     ],
   },
   {
+    title: "Ears",
+    note: "Hear a chord before you play it.",
+    areas: [{ title: "Ear training", blurb: "Major or minor, chord names and where a change goes, ten questions a round.", to: "/ear", art: "waves", palette: { bg: "from-[#1d1406] to-[#a16207]", ink: "text-[#fef08a]", label: "fill-[#eab308]" }, units: ["Ear training"] }],
+  },
+  {
     title: "Play along",
     note: "Put it together over a progression.",
     areas: [{ title: "Progression play-along", blurb: "Common progressions with a count-in and a backing strum.", to: "/progressions", art: "beams", palette: { bg: "from-[#050505] to-[#52525b]", ink: "text-[#f4f4f5]", label: "fill-[#a1a1aa]" }, units: ["Play-along"] }],
@@ -73,7 +78,7 @@ export default function GymPage() {
     <>
       <PageHeader
         title="Gym"
-        lead="Work through it top to bottom: warm up, then notes, chords, rhythm, scales, and finish by playing along."
+        lead="Every drill, by area. Practice picks from these for you each day; come here to work on one thing."
       />
       {GYM_SECTIONS.map((sec, i) => (
         <Section key={sec.title} num={i + 1} title={sec.title} note={sec.note}>
