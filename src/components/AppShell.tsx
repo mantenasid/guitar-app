@@ -198,7 +198,7 @@ export function AppShell() {
     <div className="flex min-h-svh flex-col overflow-x-clip">
       <Haze />
       {nav}
-      <main className="mx-auto w-full max-w-[1080px] px-4 pt-7 pb-24 sm:px-7 sm:pt-10">
+      <main className="mx-auto w-full max-w-[1080px] px-4 pt-7 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:px-7 sm:pt-10">
         <Suspense fallback={null}>
           <Outlet />
         </Suspense>

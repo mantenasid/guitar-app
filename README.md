@@ -32,6 +32,19 @@ pnpm test       # unit tests
 pnpm build      # typecheck + production build into dist/
 ```
 
+## Your progress
+
+Everything is saved on the device, in the browser's IndexedDB, the moment a drill is scored. There's no account and nothing is uploaded; the mic is analysed live and never recorded. Progress belongs to one browser on one device, so **Practice → Your progress → Back up** saves it to a file, and **Restore** merges a file back in (on a new device, or after clearing the browser). Restoring never removes anything already there.
+
+## Install it as an app
+
+Deploy the `dist` folder to any static host. `vercel.json` (Vercel) and `public/_redirects` (Netlify) send every address to the app. Then:
+
+- **iPhone:** open it in Safari, tap Share → Add to Home Screen.
+- **Android / Chrome / Edge:** use Install app in the browser menu.
+
+It opens full screen, works offline, and installed apps are far less likely to have their storage cleared by the browser.
+
 ## Stack
 
 React 19 · TypeScript · Vite · Tailwind CSS 4 · React Router · Zustand (settings) · Dexie/IndexedDB (progress) · Web Audio (synthesised guitar, metronome) · Vitest.

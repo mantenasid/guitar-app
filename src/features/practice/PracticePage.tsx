@@ -7,6 +7,7 @@ import { db, localDate } from "@/progress/db";
 import { useDailyPlan, usePracticeDays, useProgress, useStreak } from "@/progress/hooks";
 import { DAILY_XP_GOAL, playerLevel, type PlanTask } from "@/skills/progress";
 import { METRICS, formatValue, kindOf, maxLevel, type SkillKind } from "@/skills/registry";
+import { SaveCard } from "./SaveCard";
 import { REASON_LABEL, STEP_SECONDS, toStep, useSession, type Summary } from "./session";
 
 const minutes = (seconds: number) => Math.max(1, Math.round(seconds / 60));
@@ -209,6 +210,10 @@ export default function PracticePage() {
 
       <Section title="This week">
         <Week running={running} />
+      </Section>
+
+      <Section title="Your progress">
+        <SaveCard />
       </Section>
     </>
   );

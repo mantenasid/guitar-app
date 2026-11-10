@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { createBrowserRouter, Navigate, RouterProvider } from "react-router";
 import { AppShell } from "@/components/AppShell";
 import { HomePage } from "@/features/home/HomePage";
+import { keepStorage } from "@/progress/backup";
 import "./styles.css";
 
 // Each area loads on first visit, so the first screen stays small and fast. The shell holds the Suspense boundary, so moving between
@@ -56,3 +57,7 @@ createRoot(document.getElementById("root")!).render(
     <RouterProvider router={router} />
   </StrictMode>,
 );
+
+// Opened as an installed app: ask the browser to keep this site's storage rather than clear it when space is short.
+// (Elsewhere this is asked when you first back up, since some browsers show a prompt for it.)
+if (matchMedia("(display-mode: standalone)").matches || (navigator as Navigator & { standalone?: boolean }).standalone) void keepStorage();

@@ -49,7 +49,7 @@ export function SessionBar() {
   };
 
   return (
-    <div className="no-print pointer-events-none fixed inset-x-0 bottom-0 z-30 px-3 pb-3 [view-transition-name:session-bar] sm:px-6 sm:pb-4">
+    <div className="no-print pointer-events-none fixed inset-x-0 bottom-0 z-30 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] [view-transition-name:session-bar] sm:px-6 sm:pb-[max(1rem,env(safe-area-inset-bottom))]">
       <div className={`pointer-events-auto mx-auto flex max-w-[760px] flex-col gap-2 overflow-hidden rounded-2xl border border-line-2 bg-surface px-4 py-3 shadow-[0_16px_48px_-12px_rgb(0_0_0/0.55)]`}>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <div className="min-w-0 flex-1">
